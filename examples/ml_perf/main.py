@@ -1,0 +1,153 @@
+import argparse
+
+import keras
+import yaml
+
+import keras_rs
+
+from .model import DLRMDCNV2
+
+
+def main(
+    file_pattern,
+    dense_features,
+    sparse_features,
+    label,
+    embedding_dim,
+    allow_id_dropping,
+    max_ids_per_partition,
+    max_unique_ids_per_partition,
+    learning_rate,
+    bottom_mlp_dims,
+    top_mlp_dims,
+    num_dcn_layers,
+    dcn_projection_dim,
+    batch_size,
+    num_steps,
+    num_epochs,
+    log_frequency,
+):
+    # === Distributed embeddings' configs for sparse features ===
+    feature_configs = {}
+    for sparse_feature in sparse_features:
+        feature_name = sparse_feature["name"]
+        vocabulary_size = sparse_feature["vocabulary_size"]
+
+        table_config = keras_rs.layers.TableConfig(
+            name=f"{feature_name}_table",
+            vocabulary_size=vocabulary_size,
+            embedding_dim=embedding_dim,
+            # TODO(abheesht): Verify.
+            initializer=keras.initializers.VarianceScaling(
+                scale=1.0, mode="fan_in", distribution="uniform"
+            ),
+            optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
+            combiner="sum",
+            placement="sparsecore",
+            max_ids_per_partition=max_ids_per_partition,
+            max_unique_ids_per_partition=max_unique_ids_per_partition,
+        )
+        feature_configs[feature_name] = keras_rs.layers.FeatureConfig(
+            name=feature_name,
+            table=table_config,
+            # TODO(abheesht): Verify.
+            input_shape=(batch_size, 1),
+            output_shape=(batch_size, embedding_dim),
+        )
+
+    # === Instantiate model ===
+    # We instantiate the model first, because we need to preprocess sparse
+    # inputs using the distributed embedding layer defined inside the model
+    # class.
+    model = DLRMDCNV2(
+        sparse_feature_configs=feature_configs,
+        bottom_mlp_dims=bottom_mlp_dims,
+        top_mlp_dims=top_mlp_dims,
+        num_dcn_layers=num_dcn_layers,
+        projection_dim=dcn_projection_dim,
+        dtype="float32",
+        name="dlrm_dcn_v2",
+    )
+
+    # # === Load dataset ===
+    # train_ds = create_dataset(
+    #     file_pattern=file_pattern,
+    #     sparse_feature_preprocessor=model.embedding_layer,
+    #     batch_size=batch_size,
+    #     dense_features=dense_features,
+    #     sparse_features=[f["name"] for f in sparse_features],
+    #     multi_hot_sizes=[f["multi_hot_sizes"] for f in sparse_features],
+    #     label=label,
+    #     num_processes=1,
+    #     process_id=0,
+    #     parallelism=1,
+    #     training=True,
+    # )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description=(
+            "Benchmark the DLRM-DCNv2 model on the Criteo dataset (MLPerf)"
+        )
+    )
+    parser.add_argument(
+        "--config_path", type=str, help="Path to the YAML config file."
+    )
+    args = parser.parse_args()
+
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
+
+    # === Unpack args from config ===
+
+    # == Dataset config ==
+    ds_cfg = config["dataset"]
+    # File path
+    file_pattern = ds_cfg["file_pattern"]
+    # Features
+    label = ds_cfg["label"]
+    dense_features = ds_cfg["dense"]
+    sparse_features = ds_cfg["sparse"]
+
+    # == Model config ==
+    model_cfg = config["model"]
+    # Embedding
+    embedding_dim = model_cfg["embedding_dim"]
+    allow_id_dropping = model_cfg["allow_id_dropping"]
+    max_ids_per_partition = model_cfg["max_ids_per_partition"]
+    max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
+    learning_rate = model_cfg["learning_rate"]
+    # MLP
+    bottom_mlp_dims = model_cfg["bottom_mlp_dims"]
+    top_mlp_dims = model_cfg["top_mlp_dims"]
+    # DCN
+    num_dcn_layers = model_cfg["num_dcn_layers"]
+    dcn_projection_dim = model_cfg["dcn_projection_dim"]
+
+    # == Training config ==
+    training_cfg = config["training"]
+    batch_size = training_cfg["batch_size"]
+    num_steps = training_cfg["num_steps"]
+    num_epochs = training_cfg["num_epochs"]
+    log_frequency = training_cfg["log_frequency"]
+
+    main(
+        file_pattern,
+        dense_features,
+        sparse_features,
+        label,
+        embedding_dim,
+        allow_id_dropping,
+        max_ids_per_partition,
+        max_unique_ids_per_partition,
+        learning_rate,
+        bottom_mlp_dims,
+        top_mlp_dims,
+        num_dcn_layers,
+        dcn_projection_dim,
+        batch_size,
+        num_steps,
+        num_epochs,
+        log_frequency,
+    )

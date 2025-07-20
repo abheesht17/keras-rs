@@ -1,0 +1,152 @@
+import tensorflow as tf
+
+
+def _get_dummy_batch(batch_size, multi_hot_sizes, vocab_sizes):
+    """Returns a dummy batch of data in the final desired structure."""
+    data = {
+        "clicked": np.random.randint(0, 2, size=(batch_size,), dtype=np.int64)
+    }
+    dense_features_list = [
+        np.random.uniform(0.0, 0.9, size=(batch_size, 1)).astype(np.float32)
+        for _ in range(13)
+    ]
+    data["dense_features"] = np.concatenate(dense_features_list, axis=-1)
+    sparse_features = {}
+    for i in range(len(multi_hot_sizes)):
+        vocab_size = vocab_sizes[i] if i < len(vocab_sizes) else 1000
+        multi_hot_size = multi_hot_sizes[i]
+        output_key = str(i)
+        sparse_features[output_key] = np.random.randint(
+            low=0,
+            high=vocab_size,
+            size=(batch_size, multi_hot_size),
+            dtype=np.int64,
+        )
+    data["sparse_features"] = sparse_features
+    return data
+
+    def _get_direct_dummy_dataset(self, batch_size: int) -> tf.data.Dataset:
+        """Creates a TF dataset from cached dummy data of the final batch size."""
+        print(f"Returning a dummy dataset of final batch size {batch_size}")
+        dummy_data = _get_dummy_batch(
+            batch_size, self._multi_hot_sizes, self._vocab_sizes
+        )
+        dataset = tf.data.Dataset.from_tensors(dummy_data)
+        return dataset.repeat()
+
+
+def get_feature_spec(batch_size, dense_features, sparse_features, label):
+    feature_spec = {
+        label: tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.int64,
+        )
+    }
+
+    for dense_feature in dense_features:
+        feature_spec[dense_feature] = tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.float32,
+        )
+
+    for sparse_feature in sparse_features:
+        feature_spec[sparse_feature] = tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.string,
+        )
+
+    return feature_spec
+
+
+def preprocess(
+    example,
+    sparse_feature_preprocessor,
+    batch_size,
+    dense_features,
+    sparse_features,
+    multi_hot_sizes,
+    label,
+):
+    # Read example.
+    feature_spec = get_feature_spec(
+        batch_size, dense_features, sparse_features, label
+    )
+    example = tf.io.parse_single_example(example, feature_spec)
+
+    # Dense features
+    dense_feature_list = [
+        tf.reshape(example[dense_feature], [batch_size, 1])
+        for dense_feature in dense_features
+    ]
+    dense_features = tf.stack(dense_feature_list, axis=-1)
+
+    # Sparse features
+    sparse_features_dict = {}
+    for sparse_feature, multi_hot_size in zip(sparse_features, multi_hot_sizes):
+        raw_values = tf.io.decode_raw(example[sparse_feature], tf.int64)
+        raw_values = tf.reshape(raw_values, [batch_size, multi_hot_size])
+        sparse_features_dict[sparse_feature] = raw_values
+    preprocessed_sparse_features_dict = sparse
+
+    # Labels
+    labels = tf.reshape(example[label], [batch_size])
+
+    return (
+        {
+            "dense_features": dense_features,
+            "sparse_features": sparse_feature_preprocessor.preprocess(
+                sparse_features_dict
+            ),
+        },
+        labels,
+    )
+
+
+def create_dataset(
+    file_pattern,
+    sparse_feature_preprocessor,
+    per_replica_batch_size,
+    dense_features,
+    sparse_features,
+    multi_hot_sizes,
+    label,
+    num_processes,
+    process_id,
+    parallelism,
+    shuffle_buffer=256,
+    prefetch_size=256,
+    training=False,
+):
+    dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
+    dataset = dataset.shard(num_processes, process_id)
+    dataset = tf.data.TFRecordDataset(
+        dataset,
+        buffer_size=32 * 1024 * 1024,
+        num_parallel_reads=parallelism,
+    )
+
+    # Process example.
+    dataset = dataset.map(
+        lambda x: preprocess(
+            x,
+            sparse_feature_preprocessor,
+            per_replica_batch_size,
+            dense_features,
+            sparse_features,
+            multi_hot_sizes,
+            label,
+        ),
+        num_parallel_calls=parallelism,
+    )
+
+    # Shuffle dataset if in training mode.
+    if training and shuffle_buffer > 0:
+        dataset = dataset.shuffle(shuffle_buffer)
+
+    dataset = dataset.prefetch(prefetch_size)
+    options = tf.data.Options()
+    options.deterministic = False
+    options.threading.private_threadpool_size = 96
+    dataset = dataset.with_options(options)
+
+    return dataset
