@@ -24,6 +24,8 @@ class DLRMDCNV2(keras.Model):
         name=None,
         **kwargs,
     ):
+        super().__init__(dtype=dtype, name=name, **kwargs)
+
         # === Layers ====
 
         # Bottom MLP for encoding dense features
@@ -33,7 +35,6 @@ class DLRMDCNV2(keras.Model):
                 intermediate_activation="relu",
                 final_activation="relu",
             ),
-            dtype=dtype,
             name="bottom_mlp",
         )
         # Distributed embeddings for encoding sparse inputs
@@ -56,7 +57,6 @@ class DLRMDCNV2(keras.Model):
                 intermediate_activation="relu",
                 final_activation="sigmoid",
             ),
-            dtype=dtype,
             name="top_mlp",
         )
 
@@ -101,6 +101,7 @@ class DLRMDCNV2(keras.Model):
                 activation=intermediate_activation,
                 kernel_initializer=_clone_initializer(initializer),
                 bias_initializer=_clone_initializer(initializer),
+                dtype=self.dtype,
             )
             for dim in dims[:-1]
         ]
@@ -110,6 +111,7 @@ class DLRMDCNV2(keras.Model):
                 activation=final_activation,
                 kernel_initializer=_clone_initializer(initializer),
                 bias_initializer=_clone_initializer(initializer),
+                dtype=self.dtype,
             )
         ]
         return layers

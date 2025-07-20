@@ -1,7 +1,8 @@
+import numpy as np
 import tensorflow as tf
 
 
-def _get_dummy_batch(batch_size, multi_hot_sizes, vocab_sizes):
+def _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes):
     """Returns a dummy batch of data in the final desired structure."""
     data = {
         "clicked": np.random.randint(0, 2, size=(batch_size,), dtype=np.int64)
@@ -13,10 +14,9 @@ def _get_dummy_batch(batch_size, multi_hot_sizes, vocab_sizes):
     data["dense_features"] = np.concatenate(dense_features_list, axis=-1)
     sparse_features = {}
     for i in range(len(multi_hot_sizes)):
-        vocab_size = vocab_sizes[i] if i < len(vocab_sizes) else 1000
+        vocab_size = vocabulary_sizes[i] if i < len(vocabulary_sizes) else 1000
         multi_hot_size = multi_hot_sizes[i]
-        output_key = str(i)
-        sparse_features[output_key] = np.random.randint(
+        sparse_features[f"categorical-feature-{i + 14}"] = np.random.randint(
             low=0,
             high=vocab_size,
             size=(batch_size, multi_hot_size),
@@ -25,14 +25,28 @@ def _get_dummy_batch(batch_size, multi_hot_sizes, vocab_sizes):
     data["sparse_features"] = sparse_features
     return data
 
-    def _get_direct_dummy_dataset(self, batch_size: int) -> tf.data.Dataset:
-        """Creates a TF dataset from cached dummy data of the final batch size."""
-        print(f"Returning a dummy dataset of final batch size {batch_size}")
-        dummy_data = _get_dummy_batch(
-            batch_size, self._multi_hot_sizes, self._vocab_sizes
+
+def _get_direct_dummy_dataset(
+    batch_size, multi_hot_sizes, vocabulary_sizes, sparse_feature_preprocessor
+):
+    """Creates a TF dataset from cached dummy data of the final batch size."""
+    print(f"Returning a dummy dataset of final batch size {batch_size}")
+    dummy_data = _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes)
+    dataset = tf.data.Dataset.from_tensors(dummy_data)
+
+    def _preprocess(example):
+        return (
+            {
+                "dense_features": example["dense_features"],
+                "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
+                    example["sparse_features"]
+                ),
+            },
+            example["clicked"],
         )
-        dataset = tf.data.Dataset.from_tensors(dummy_data)
-        return dataset.repeat()
+
+    dataset = dataset.map(_preprocess)
+    return dataset.repeat()
 
 
 def get_feature_spec(batch_size, dense_features, sparse_features, label):
@@ -86,7 +100,6 @@ def preprocess(
         raw_values = tf.io.decode_raw(example[sparse_feature], tf.int64)
         raw_values = tf.reshape(raw_values, [batch_size, multi_hot_size])
         sparse_features_dict[sparse_feature] = raw_values
-    preprocessed_sparse_features_dict = sparse
 
     # Labels
     labels = tf.reshape(example[label], [batch_size])
@@ -94,7 +107,7 @@ def preprocess(
     return (
         {
             "dense_features": dense_features,
-            "sparse_features": sparse_feature_preprocessor.preprocess(
+            "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
                 sparse_features_dict
             ),
         },
@@ -109,6 +122,7 @@ def create_dataset(
     dense_features,
     sparse_features,
     multi_hot_sizes,
+    vocabulary_sizes,
     label,
     num_processes,
     process_id,
@@ -116,7 +130,16 @@ def create_dataset(
     shuffle_buffer=256,
     prefetch_size=256,
     training=False,
+    return_dummy_dataset=False,
 ):
+    if return_dummy_dataset:
+        return _get_direct_dummy_dataset(
+            per_replica_batch_size * num_processes,
+            multi_hot_sizes,
+            vocabulary_sizes,
+            sparse_feature_preprocessor,
+        )
+
     dataset = tf.data.Dataset.list_files(file_pattern, shuffle=False)
     dataset = dataset.shard(num_processes, process_id)
     dataset = tf.data.TFRecordDataset(

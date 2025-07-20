@@ -1,11 +1,14 @@
 import argparse
+import os
+
+os.environ["KERAS_BACKEND"] = "jax"
 
 import keras
 import yaml
+from dataloader import create_dataset
+from model import DLRMDCNV2
 
 import keras_rs
-
-from .model import DLRMDCNV2
 
 
 def main(
@@ -17,11 +20,12 @@ def main(
     allow_id_dropping,
     max_ids_per_partition,
     max_unique_ids_per_partition,
-    learning_rate,
+    embedding_learning_rate,
     bottom_mlp_dims,
     top_mlp_dims,
     num_dcn_layers,
     dcn_projection_dim,
+    learning_rate,
     batch_size,
     num_steps,
     num_epochs,
@@ -41,7 +45,9 @@ def main(
             initializer=keras.initializers.VarianceScaling(
                 scale=1.0, mode="fan_in", distribution="uniform"
             ),
-            optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
+            optimizer=keras.optimizers.Adagrad(
+                learning_rate=embedding_learning_rate
+            ),
             combiner="sum",
             placement="sparsecore",
             max_ids_per_partition=max_ids_per_partition,
@@ -64,25 +70,32 @@ def main(
         bottom_mlp_dims=bottom_mlp_dims,
         top_mlp_dims=top_mlp_dims,
         num_dcn_layers=num_dcn_layers,
-        projection_dim=dcn_projection_dim,
+        dcn_projection_dim=dcn_projection_dim,
         dtype="float32",
         name="dlrm_dcn_v2",
     )
+    model.compile(
+        loss=keras.losses.BinaryCrossentropy(),
+        optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
+        metrics=[keras.metrics.BinaryAccuracy()],
+    )
 
-    # # === Load dataset ===
-    # train_ds = create_dataset(
-    #     file_pattern=file_pattern,
-    #     sparse_feature_preprocessor=model.embedding_layer,
-    #     batch_size=batch_size,
-    #     dense_features=dense_features,
-    #     sparse_features=[f["name"] for f in sparse_features],
-    #     multi_hot_sizes=[f["multi_hot_sizes"] for f in sparse_features],
-    #     label=label,
-    #     num_processes=1,
-    #     process_id=0,
-    #     parallelism=1,
-    #     training=True,
-    # )
+    # === Load dataset ===
+    train_ds = create_dataset(
+        file_pattern=file_pattern,
+        sparse_feature_preprocessor=model.embedding_layer,
+        per_replica_batch_size=batch_size,
+        dense_features=dense_features,
+        sparse_features=[f["name"] for f in sparse_features],
+        multi_hot_sizes=[f["multi_hot_size"] for f in sparse_features],
+        vocabulary_sizes=[f["vocabulary_size"] for f in sparse_features],
+        label=label,
+        num_processes=1,
+        process_id=0,
+        parallelism=1,
+        training=True,
+        return_dummy_dataset=True,
+    )
 
 
 if __name__ == "__main__":
@@ -96,7 +109,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    with open("config.yaml", "r") as f:
+    with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
     # === Unpack args from config ===
@@ -117,7 +130,7 @@ if __name__ == "__main__":
     allow_id_dropping = model_cfg["allow_id_dropping"]
     max_ids_per_partition = model_cfg["max_ids_per_partition"]
     max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
-    learning_rate = model_cfg["learning_rate"]
+    embedding_learning_rate = model_cfg["learning_rate"]
     # MLP
     bottom_mlp_dims = model_cfg["bottom_mlp_dims"]
     top_mlp_dims = model_cfg["top_mlp_dims"]
@@ -127,6 +140,7 @@ if __name__ == "__main__":
 
     # == Training config ==
     training_cfg = config["training"]
+    learning_rate = training_cfg["learning_rate"]
     batch_size = training_cfg["batch_size"]
     num_steps = training_cfg["num_steps"]
     num_epochs = training_cfg["num_epochs"]
@@ -141,11 +155,12 @@ if __name__ == "__main__":
         allow_id_dropping,
         max_ids_per_partition,
         max_unique_ids_per_partition,
-        learning_rate,
+        embedding_learning_rate,
         bottom_mlp_dims,
         top_mlp_dims,
         num_dcn_layers,
         dcn_projection_dim,
+        learning_rate,
         batch_size,
         num_steps,
         num_epochs,
