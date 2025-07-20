@@ -60,7 +60,7 @@ class DLRMDCNV2(keras.Model):
             name="top_mlp",
         )
 
-        # Passed attributes
+        # === Passed attributes ===
         self.sparse_feature_configs = sparse_feature_configs
         self.bottom_mlp_dims = bottom_mlp_dims
         self.top_mlp_dims = top_mlp_dims
@@ -115,6 +115,19 @@ class DLRMDCNV2(keras.Model):
             )
         ]
         return layers
+
+    def get_config(self):
+        config = super().get_config()
+        config.update(
+            {
+                "sparse_feature_configs": self.sparse_feature_configs,
+                "bottom_mlp_dims": self.bottom_mlp_dims,
+                "top_mlp_dims": self.top_mlp_dims,
+                "num_dcn_layers": self.num_dcn_layers,
+                "dcn_projection_dim": self.dcn_projection_dim,
+            }
+        )
+        return config
 
 
 class DCNBlock(keras.layers.Layer):
