@@ -5,7 +5,6 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 import keras
 import yaml
-from dataloader import create_dataset
 from model import DLRMDCNV2
 
 import keras_rs
@@ -81,21 +80,27 @@ def main(
     )
 
     # === Load dataset ===
-    train_ds = create_dataset(
-        file_pattern=file_pattern,
-        sparse_feature_preprocessor=model.embedding_layer,
-        per_replica_batch_size=batch_size,
-        dense_features=dense_features,
-        sparse_features=[f["name"] for f in sparse_features],
+    train_ds = create_dummy_dataset(
+        batch_size=batch_size,
         multi_hot_sizes=[f["multi_hot_size"] for f in sparse_features],
         vocabulary_sizes=[f["vocabulary_size"] for f in sparse_features],
-        label=label,
-        num_processes=1,
-        process_id=0,
-        parallelism=1,
-        training=True,
-        return_dummy_dataset=True,
+        sparse_feature_preprocessor=model.embedding_layer,
     )
+    # train_ds = create_dataset(
+    #     file_pattern=file_pattern,
+    #     sparse_feature_preprocessor=model.embedding_layer,
+    #     per_replica_batch_size=batch_size,
+    #     dense_features=dense_features,
+    #     sparse_features=[f["name"] for f in sparse_features],
+    #     multi_hot_sizes=[f["multi_hot_size"] for f in sparse_features],
+    #     vocabulary_sizes=[f["vocabulary_size"] for f in sparse_features],
+    #     label=label,
+    #     num_processes=1,
+    #     process_id=0,
+    #     parallelism=1,
+    #     training=True,
+    #     return_dummy_dataset=True,
+    # )()
 
 
 if __name__ == "__main__":
