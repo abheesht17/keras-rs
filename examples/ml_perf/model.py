@@ -77,7 +77,9 @@ class DLRMDCNV2(keras.Model):
         sparse_embeddings = self.embedding_layer(sparse_features)
 
         # Interaction
-        x = ops.concatenate([dense_output, *sparse_embeddings], axis=-1)
+        x = ops.concatenate(
+            [dense_output, *sparse_embeddings.values()], axis=-1
+        )
         x = self.dcn_block(x)
 
         # Predictions
@@ -151,7 +153,7 @@ class DCNBlock(keras.layers.Layer):
 
     def call(self, x0):
         xl = x0
-        for layer in self.cross_layers:
+        for layer in self.layers:
             xl = layer(x0, xl)
         return xl
 

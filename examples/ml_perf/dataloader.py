@@ -19,8 +19,12 @@ def _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes):
 
     # Sparse features.
     sparse_features = {}
-    for multi_hot_size, vocabulary_size in zip(multi_hot_sizes, vocabulary_sizes):
-        sparse_features[f"categorical-feature-{i + 14}"] = np.random.randint(
+    for i, (multi_hot_size, vocabulary_size) in enumerate(
+        zip(multi_hot_sizes, vocabulary_sizes)
+    ):
+        # TODO: We don't need this custom renaming. Remove later, when we
+        # shift from dummy data to actual data.
+        sparse_features[f"cat_{i + 14}_id"] = np.random.randint(
             low=0,
             high=vocabulary_size,
             size=(batch_size, multi_hot_size),
@@ -39,17 +43,18 @@ def create_dummy_dataset(
 
     def generator():
         for example in dataset:
-        yield (
-            {
-                "dense_features": example["dense_features"],
-                "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
-                    example["sparse_features"]
-                ),
-            },
-            example["clicked"],
-        )
+            yield (
+                {
+                    "dense_features": example["dense_features"],
+                    "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
+                        example["sparse_features"]
+                    ),
+                },
+                example["clicked"],
+            )
 
     return generator
+
 
 # TODO: Write correct data loading logic once we have access to the dataset.
 

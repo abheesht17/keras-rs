@@ -61,7 +61,7 @@ model:
 
 # === Training Hyperparameters ===
 training:
-  batch_size: 8192
+  global_batch_size: 8192
   num_steps: 28000
   num_epochs: 1
   log_frequency: 10
