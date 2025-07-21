@@ -5,6 +5,7 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 import keras
 import yaml
+from dataloader import create_dummy_dataset
 from model import DLRMDCNV2
 
 import keras_rs
@@ -101,6 +102,7 @@ def main(
         ],
         sparse_feature_preprocessor=model.embedding_layer,
     )()
+    model.fit(train_ds, epochs=1)
     # train_ds = create_dataset(
     #     file_pattern=file_pattern,
     #     sparse_feature_preprocessor=model.embedding_layer,
