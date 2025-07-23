@@ -40,10 +40,16 @@ def create_dummy_dataset(
 ):
     """Creates a TF dataset from cached dummy data of the final batch size."""
     dummy_data = _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes)
-    dataset = tf.data.Dataset.from_tensors(dummy_data).shard(
+
+    dataset = tf.data.Dataset.from_tensors(dummy_data).repeat(5).shard(
         jax.process_count(), jax.process_index()
     )
-    dataset = dataset.repeat(5)
+
+    options = tf.data.Options()
+    options.experimental_distribute.auto_shard_policy = (
+        tf.data.experimental.AutoShardPolicy.OFF
+    )
+    dataset = dataset.with_options(options)
 
     def generator():
         for example in dataset:
