@@ -32,7 +32,7 @@ def main(
     log_frequency,
 ):
     # Set DDP as Keras distribution strategy
-    data_parallel = keras.distribution.DataParallel()
+    data_parallel = keras.distribution.DataParallel(auto_shard_dataset=False)
     keras.distribution.set_distribution(data_parallel)
 
     # === Distributed embeddings' configs for sparse features ===
