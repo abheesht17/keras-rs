@@ -43,7 +43,7 @@ def create_dummy_dataset(
 
     dataset = (
         tf.data.Dataset.from_tensors(dummy_data)
-        .repeat(5)
+        .repeat(16)
         .shard(jax.process_count(), jax.process_index())
     )
 
