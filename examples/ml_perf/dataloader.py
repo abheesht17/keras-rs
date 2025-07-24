@@ -53,7 +53,7 @@ def create_dummy_dataset(
                 {
                     "dense_features": example["dense_features"],
                     "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
-                        example["sparse_features"]
+                        example["sparse_features"], training=True
                     ),
                 },
                 example["clicked"],
