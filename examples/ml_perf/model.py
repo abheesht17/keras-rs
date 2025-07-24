@@ -20,11 +20,13 @@ class DLRMDCNV2(keras.Model):
         top_mlp_dims,
         num_dcn_layers,
         dcn_projection_dim,
-        dtype,
+        seed=None,
+        dtype=None,
         name=None,
         **kwargs,
     ):
         super().__init__(dtype=dtype, name=name, **kwargs)
+        self.seed_generator = keras.random.SeedGenerator(seed)
 
         # === Layers ====
 
@@ -47,6 +49,7 @@ class DLRMDCNV2(keras.Model):
         self.dcn_block = DCNBlock(
             num_layers=num_dcn_layers,
             projection_dim=dcn_projection_dim,
+            seed=seed,
             dtype=dtype,
             name="dcn_block",
         )
@@ -66,6 +69,7 @@ class DLRMDCNV2(keras.Model):
         self.top_mlp_dims = top_mlp_dims
         self.num_dcn_layers = num_dcn_layers
         self.dcn_projection_dim = dcn_projection_dim
+        self.seed = seed
 
     def call(self, inputs):
         # Inputs
@@ -94,7 +98,10 @@ class DLRMDCNV2(keras.Model):
     ):
         # Layers.
         initializer = keras.initializers.VarianceScaling(
-            scale=1.0, mode="fan_in", distribution="uniform"
+            scale=1.0,
+            mode="fan_in",
+            distribution="uniform",
+            seed=self.seed_generator,
         )
 
         layers = [
@@ -127,20 +134,24 @@ class DLRMDCNV2(keras.Model):
                 "top_mlp_dims": self.top_mlp_dims,
                 "num_dcn_layers": self.num_dcn_layers,
                 "dcn_projection_dim": self.dcn_projection_dim,
+                "seed": self.seed,
             }
         )
         return config
 
 
 class DCNBlock(keras.layers.Layer):
-    def __init__(self, num_layers, projection_dim, dtype, name, **kwargs):
+    def __init__(self, num_layers, projection_dim, seed, dtype, name, **kwargs):
         super().__init__(dtype=dtype, name=name, **kwargs)
+        self.seed_generator = keras.random.SeedGenerator(seed)
 
         # Layers
         self.layers = [
             keras_rs.layers.FeatureCross(
                 projection_dim=projection_dim,
-                kernel_initializer="glorot_normal",
+                kernel_initializer=keras.initializers.GlorotUniform(
+                    seed=self.seed_generator
+                ),
                 bias_initializer="zeros",
                 dtype=dtype,
             )
@@ -150,6 +161,7 @@ class DCNBlock(keras.layers.Layer):
         # Passed attributes
         self.num_layers = num_layers
         self.projection_dim = projection_dim
+        self.seed = seed
 
     def call(self, x0):
         xl = x0
@@ -163,6 +175,7 @@ class DCNBlock(keras.layers.Layer):
             {
                 "num_layers": self.num_layers,
                 "projection_dim": self.projection_dim,
+                "seed": self.seed,
             }
         )
         return config

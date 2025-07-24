@@ -10,6 +10,8 @@ from model import DLRMDCNV2
 
 import keras_rs
 
+SEED = 42
+
 
 def main(
     file_pattern,
@@ -31,6 +33,8 @@ def main(
     num_epochs,
     log_frequency,
 ):
+    seed_generator = keras.random.SeedGenerator(SEED)
+
     # Set DDP as Keras distribution strategy
     data_parallel = keras.distribution.DataParallel(auto_shard_dataset=False)
     keras.distribution.set_distribution(data_parallel)
@@ -82,6 +86,7 @@ def main(
         top_mlp_dims=top_mlp_dims,
         num_dcn_layers=num_dcn_layers,
         dcn_projection_dim=dcn_projection_dim,
+        seed=seed_generator,
         dtype="float32",
         name="dlrm_dcn_v2",
     )
