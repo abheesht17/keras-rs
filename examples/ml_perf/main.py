@@ -163,7 +163,7 @@ def main(
     #     model(element[0])
     #     break
     # Train the model.
-    model.fit(train_ds, epochs=1)
+    # model.fit(train_ds, epochs=1)
     # train_ds = create_dataset(
     #     file_pattern=file_pattern,
     #     sparse_feature_preprocessor=model.embedding_layer,
