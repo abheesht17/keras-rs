@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 
-def _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes):
+def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
     """Returns a dummy batch of data in the final desired structure."""
 
     # Labels.
@@ -19,27 +19,51 @@ def _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes):
     data["dense_features"] = np.concatenate(dense_features_list, axis=-1)
 
     # Sparse features.
-    sparse_features = {}
-    for i, (multi_hot_size, vocabulary_size) in enumerate(
-        zip(multi_hot_sizes, vocabulary_sizes)
-    ):
+    sparse_features_dict = {}
+    for i, sparse_feature in enumerate(sparse_features):
+        vocabulary_size = sparse_feature["vocabulary_size"]
+        multi_hot_size = sparse_feature["multi_hot_size"]
+
         # TODO: We don't need this custom renaming. Remove later, when we
         # shift from dummy data to actual data.
-        sparse_features[f"cat_{i + 14}_id"] = np.random.randint(
+        sparse_features_dict[f"cat_{i + 14}_id"] = np.random.randint(
             low=0,
             high=vocabulary_size,
             size=(batch_size, multi_hot_size),
             dtype=np.int64,
         )
-    data["sparse_features"] = sparse_features
+
+    # Dense lookup features.
+    dense_lookups = {}
+    for i, dense_lookup_feature in enumerate(dense_lookup_features):
+        vocabulary_size = sparse_feature["vocabulary_size"]
+        multi_hot_size = sparse_feature["multi_hot_size"]
+
+        # TODO: We don't need this custom renaming. Remove later, when we
+        # shift from dummy data to actual data.
+        dense_lookups[f"cat_{i + 14}_id"] = np.random.randint(
+            low=0,
+            high=vocabulary_size,
+            size=(batch_size, multi_hot_size),
+            dtype=np.int64,
+        )
+
+    data["sparse_features"] = sparse_features_dict
+    if dense_lookups:
+        data["dense_lookups"] = dense_lookups
     return data
 
 
 def create_dummy_dataset(
-    batch_size, multi_hot_sizes, vocabulary_sizes, sparse_feature_preprocessor
+    batch_size,
+    sparse_features,
+    dense_lookup_features,
+    sparse_feature_preprocessor,
 ):
     """Creates a TF dataset from cached dummy data of the final batch size."""
-    dummy_data = _get_dummy_batch(batch_size, multi_hot_sizes, vocabulary_sizes)
+    dummy_data = _get_dummy_batch(
+        batch_size, sparse_features, dense_lookup_features
+    )
 
     dataset = (
         tf.data.Dataset.from_tensors(dummy_data)
@@ -49,15 +73,16 @@ def create_dummy_dataset(
 
     def generator():
         for example in dataset:
-            yield (
-                {
-                    "dense_features": example["dense_features"],
-                    "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
-                        example["sparse_features"], training=True
-                    ),
-                },
-                example["clicked"],
-            )
+            to_yield_x = {
+                "dense_features": example["dense_features"],
+                "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
+                    example["sparse_features"], training=True
+                ),
+            }
+            if "dense_lookups" in example:
+                to_yield_x["dense_lookups"] = example["dense_lookups"]
+            to_yield_y = example["clicked"]
+            yield (to_yield_x, to_yield_y)
 
     return generator
 

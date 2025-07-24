@@ -18,6 +18,7 @@ def main(
     file_pattern,
     dense_features,
     sparse_features,
+    dense_lookup_features,
     label,
     embedding_dim,
     allow_id_dropping,
@@ -81,6 +82,8 @@ def main(
     # class.
     model = DLRMDCNV2(
         sparse_feature_configs=feature_configs,
+        dense_lookup_features=dense_lookup_features,
+        embedding_dim=embedding_dim,
         bottom_mlp_dims=bottom_mlp_dims,
         top_mlp_dims=top_mlp_dims,
         num_dcn_layers=num_dcn_layers,
@@ -98,12 +101,8 @@ def main(
     # === Load dataset ===
     train_ds = create_dummy_dataset(
         batch_size=global_batch_size,
-        multi_hot_sizes=[
-            feature["multi_hot_size"] for feature in sparse_features
-        ],
-        vocabulary_sizes=[
-            feature["vocabulary_size"] for feature in sparse_features
-        ],
+        sparse_features=sparse_features,
+        dense_lookup_features=dense_lookup_features,
         sparse_feature_preprocessor=model.embedding_layer,
     )()
 
@@ -211,6 +210,7 @@ if __name__ == "__main__":
     # Embedding
     embedding_dim = model_cfg["embedding_dim"]
     allow_id_dropping = model_cfg["allow_id_dropping"]
+    embedding_threshold = model_cfg["embedding_threshold"]
     max_ids_per_partition = model_cfg["max_ids_per_partition"]
     max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
     embedding_learning_rate = model_cfg["learning_rate"]
@@ -229,10 +229,20 @@ if __name__ == "__main__":
     num_epochs = training_cfg["num_epochs"]
     log_frequency = training_cfg["log_frequency"]
 
+    # For features which have vocabulary_size < embedding_threshold, we can
+    # just do a normal dense lookup for those instead of have distributed
+    # embeddings.
+    dense_lookup_features = []
+    for sparse_feature in sparse_features:
+        if sparse_feature["vocabulary_size"] < embedding_threshold:
+            dense_lookup_features.append(sparse_feature)
+            sparse_features.remove(sparse_feature)
+
     main(
         file_pattern,
         dense_features,
         sparse_features,
+        dense_lookup_features,
         label,
         embedding_dim,
         allow_id_dropping,
