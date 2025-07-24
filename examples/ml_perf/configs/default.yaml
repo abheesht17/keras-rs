@@ -44,11 +44,11 @@ dataset:
 # === Model Architecture ===
 model:
   # Embedding
-  embedding_dim: 16
+  embedding_dim: 128
   allow_id_dropping: true
   embedding_threshold: 21000
   max_ids_per_partition: 2048
-  max_unique_ids_per_partition: 2048
+  max_unique_ids_per_partition: 512
   learning_rate: 0.01
 
   # MLP
@@ -61,7 +61,7 @@ model:
 
 # === Training Hyperparameters ===
 training:
-  global_batch_size: 8192
+  global_batch_size: 135168
   num_steps: 28000
   num_epochs: 1
   log_frequency: 10
