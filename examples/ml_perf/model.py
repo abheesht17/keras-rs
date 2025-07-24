@@ -4,8 +4,10 @@ from keras import ops
 import keras_rs
 
 
-def _clone_initializer(initializer: keras.initializers.Initializer):
+def _clone_initializer(initializer: keras.initializers.Initializer, seed):
     config = initializer.get_config()
+    config.pop("seed")
+    config = {**config, "seed": seed}
     initializer_class: type[keras.initializers.Initializer] = (
         initializer.__class__
     )
@@ -26,7 +28,7 @@ class DLRMDCNV2(keras.Model):
         **kwargs,
     ):
         super().__init__(dtype=dtype, name=name, **kwargs)
-        self.seed_generator = keras.random.SeedGenerator(seed)
+        self.seed = seed
 
         # === Layers ====
 
@@ -69,7 +71,6 @@ class DLRMDCNV2(keras.Model):
         self.top_mlp_dims = top_mlp_dims
         self.num_dcn_layers = num_dcn_layers
         self.dcn_projection_dim = dcn_projection_dim
-        self.seed = seed
 
     def call(self, inputs):
         # Inputs
@@ -101,15 +102,19 @@ class DLRMDCNV2(keras.Model):
             scale=1.0,
             mode="fan_in",
             distribution="uniform",
-            seed=self.seed_generator,
+            seed=self.seed,
         )
 
         layers = [
             keras.layers.Dense(
                 units=dim,
                 activation=intermediate_activation,
-                kernel_initializer=_clone_initializer(initializer),
-                bias_initializer=_clone_initializer(initializer),
+                kernel_initializer=_clone_initializer(
+                    initializer, seed=self.seed
+                ),
+                bias_initializer=_clone_initializer(
+                    initializer, seed=self.seed
+                ),
                 dtype=self.dtype,
             )
             for dim in dims[:-1]
@@ -118,8 +123,12 @@ class DLRMDCNV2(keras.Model):
             keras.layers.Dense(
                 units=dims[-1],
                 activation=final_activation,
-                kernel_initializer=_clone_initializer(initializer),
-                bias_initializer=_clone_initializer(initializer),
+                kernel_initializer=_clone_initializer(
+                    initializer, seed=self.seed
+                ),
+                bias_initializer=_clone_initializer(
+                    initializer, seed=self.seed
+                ),
                 dtype=self.dtype,
             )
         ]
@@ -143,15 +152,12 @@ class DLRMDCNV2(keras.Model):
 class DCNBlock(keras.layers.Layer):
     def __init__(self, num_layers, projection_dim, seed, dtype, name, **kwargs):
         super().__init__(dtype=dtype, name=name, **kwargs)
-        self.seed_generator = keras.random.SeedGenerator(seed)
 
         # Layers
         self.layers = [
             keras_rs.layers.FeatureCross(
                 projection_dim=projection_dim,
-                kernel_initializer=keras.initializers.GlorotUniform(
-                    seed=self.seed_generator
-                ),
+                kernel_initializer=keras.initializers.GlorotUniform(seed=seed),
                 bias_initializer="zeros",
                 dtype=dtype,
             )
