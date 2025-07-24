@@ -238,9 +238,6 @@ if __name__ == "__main__":
             dense_lookup_features.append(sparse_feature)
             sparse_features.remove(sparse_feature)
 
-    print("--->gg", sparse_features)
-    print("--->not gg", dense_lookup_features)
-
     main(
         file_pattern,
         dense_features,
