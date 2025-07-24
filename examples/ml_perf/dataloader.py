@@ -20,13 +20,14 @@ def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
 
     # Sparse features.
     sparse_features_dict = {}
-    for i, sparse_feature in enumerate(sparse_features):
+    for sparse_feature in sparse_features:
         vocabulary_size = sparse_feature["vocabulary_size"]
         multi_hot_size = sparse_feature["multi_hot_size"]
+        idx = sparse_feature["name"].split("-")[-1]
 
         # TODO: We don't need this custom renaming. Remove later, when we
         # shift from dummy data to actual data.
-        sparse_features_dict[f"cat_{i + 14}_id"] = np.random.randint(
+        sparse_features_dict[f"cat_{idx}_id"] = np.random.randint(
             low=0,
             high=vocabulary_size,
             size=(batch_size, multi_hot_size),
@@ -35,13 +36,14 @@ def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
 
     # Dense lookup features.
     dense_lookups = {}
-    for i, dense_lookup_feature in enumerate(dense_lookup_features):
+    for dense_lookup_feature in dense_lookup_features:
         vocabulary_size = dense_lookup_feature["vocabulary_size"]
         multi_hot_size = dense_lookup_feature["multi_hot_size"]
+        idx = sparse_feature["name"].split("-")[-1]
 
         # TODO: We don't need this custom renaming. Remove later, when we
         # shift from dummy data to actual data.
-        dense_lookups[f"cat_{i + 14}_id"] = np.random.randint(
+        dense_lookups[f"cat_{idx}_id"] = np.random.randint(
             low=0,
             high=vocabulary_size,
             size=(batch_size, multi_hot_size),
@@ -75,8 +77,10 @@ def create_dummy_dataset(
         for example in dataset:
             to_yield_x = {
                 "dense_features": example["dense_features"],
-                "preprocessed_sparse_features": sparse_feature_preprocessor.preprocess(
-                    example["sparse_features"], training=True
+                "preprocessed_sparse_features": (
+                    sparse_feature_preprocessor.preprocess(
+                        example["sparse_features"], training=True
+                    )
                 ),
             }
             if "dense_lookups" in example:
