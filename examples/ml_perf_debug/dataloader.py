@@ -60,7 +60,6 @@ def create_dummy_dataset(
     batch_size,
     sparse_features,
     dense_lookup_features,
-    sparse_feature_preprocessor,
 ):
     """Creates a TF dataset from cached dummy data of the final batch size."""
     dummy_data = _get_dummy_batch(

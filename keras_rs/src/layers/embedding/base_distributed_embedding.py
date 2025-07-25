@@ -628,6 +628,7 @@ class DistributedEmbedding(keras.layers.Layer):
             Set of preprocessed inputs that can be fed directly into the
             `inputs` argument of the layer.
         """
+        print("BRUHHHHHH")
         # Verify input structure.
         keras.tree.assert_same_structure(self._feature_configs, inputs)
 
