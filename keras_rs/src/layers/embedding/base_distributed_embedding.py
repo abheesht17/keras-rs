@@ -629,71 +629,72 @@ class DistributedEmbedding(keras.layers.Layer):
             `inputs` argument of the layer.
         """
         print("BRUHHHHHH")
-        # Verify input structure.
-        keras.tree.assert_same_structure(self._feature_configs, inputs)
+        return inputs
+        # # Verify input structure.
+        # keras.tree.assert_same_structure(self._feature_configs, inputs)
 
-        if not self.built:
-            input_shapes = keras.tree.map_structure_up_to(
-                self._feature_configs,
-                lambda array: backend.standardize_shape(array.shape),
-                inputs,
-            )
-            self.build(input_shapes)
+        # if not self.built:
+        #     input_shapes = keras.tree.map_structure_up_to(
+        #         self._feature_configs,
+        #         lambda array: backend.standardize_shape(array.shape),
+        #         inputs,
+        #     )
+        #     self.build(input_shapes)
 
-        # Go from deeply nested structure of inputs to flat inputs.
-        flat_inputs = keras.tree.flatten(inputs)
+        # # Go from deeply nested structure of inputs to flat inputs.
+        # flat_inputs = keras.tree.flatten(inputs)
 
-        # Go from flat to nested dict placement -> path -> input.
-        placement_to_path_to_inputs = keras.tree.pack_sequence_as(
-            self._placement_to_path_to_feature_config, flat_inputs
-        )
+        # # Go from flat to nested dict placement -> path -> input.
+        # placement_to_path_to_inputs = keras.tree.pack_sequence_as(
+        #     self._placement_to_path_to_feature_config, flat_inputs
+        # )
 
-        if weights is not None:
-            # Same for weights if present.
-            keras.tree.assert_same_structure(self._feature_configs, weights)
-            flat_weights = keras.tree.flatten(weights)
-            placement_to_path_to_weights = keras.tree.pack_sequence_as(
-                self._placement_to_path_to_feature_config, flat_weights
-            )
-        else:
-            # Populate keys for weights.
-            placement_to_path_to_weights = {
-                k: None for k in placement_to_path_to_inputs
-            }
+        # if weights is not None:
+        #     # Same for weights if present.
+        #     keras.tree.assert_same_structure(self._feature_configs, weights)
+        #     flat_weights = keras.tree.flatten(weights)
+        #     placement_to_path_to_weights = keras.tree.pack_sequence_as(
+        #         self._placement_to_path_to_feature_config, flat_weights
+        #     )
+        # else:
+        #     # Populate keys for weights.
+        #     placement_to_path_to_weights = {
+        #         k: None for k in placement_to_path_to_inputs
+        #     }
 
-        placement_to_path_to_preprocessed: dict[
-            str, dict[str, dict[str, types.Nested[types.Tensor]]]
-        ] = {}
+        # placement_to_path_to_preprocessed: dict[
+        #     str, dict[str, dict[str, types.Nested[types.Tensor]]]
+        # ] = {}
 
-        # Preprocess for features placed on "sparsecore".
-        if "sparsecore" in placement_to_path_to_inputs:
-            placement_to_path_to_preprocessed["sparsecore"] = (
-                self._sparsecore_preprocess(
-                    placement_to_path_to_inputs["sparsecore"],
-                    placement_to_path_to_weights["sparsecore"],
-                    training,
-                )
-            )
+        # # Preprocess for features placed on "sparsecore".
+        # if "sparsecore" in placement_to_path_to_inputs:
+        #     placement_to_path_to_preprocessed["sparsecore"] = (
+        #         self._sparsecore_preprocess(
+        #             placement_to_path_to_inputs["sparsecore"],
+        #             placement_to_path_to_weights["sparsecore"],
+        #             training,
+        #         )
+        #     )
 
-        # Preprocess for features placed on "default_device".
-        if "default_device" in placement_to_path_to_inputs:
-            placement_to_path_to_preprocessed["default_device"] = (
-                self._default_device_preprocess(
-                    placement_to_path_to_inputs["default_device"],
-                    placement_to_path_to_weights["default_device"],
-                    training,
-                )
-            )
+        # # Preprocess for features placed on "default_device".
+        # if "default_device" in placement_to_path_to_inputs:
+        #     placement_to_path_to_preprocessed["default_device"] = (
+        #         self._default_device_preprocess(
+        #             placement_to_path_to_inputs["default_device"],
+        #             placement_to_path_to_weights["default_device"],
+        #             training,
+        #         )
+        #     )
 
-        # Mark inputs as preprocessed using an extra level of nesting.
-        # This is necessary to detect whether inputs are already preprocessed
-        # in `call`.
-        output = {
-            "preprocessed_inputs_per_placement": (
-                placement_to_path_to_preprocessed
-            )
-        }
-        return output
+        # # Mark inputs as preprocessed using an extra level of nesting.
+        # # This is necessary to detect whether inputs are already preprocessed
+        # # in `call`.
+        # output = {
+        #     "preprocessed_inputs_per_placement": (
+        #         placement_to_path_to_preprocessed
+        #     )
+        # }
+        # return output
 
     def _is_preprocessed(
         self, inputs: types.Nested[types.Tensor | types.Shape]
