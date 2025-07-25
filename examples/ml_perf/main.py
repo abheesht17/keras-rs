@@ -11,7 +11,11 @@ from model import DLRMDCNV2
 
 import keras_rs
 
-SEED = 42
+SEED = 1337
+
+
+def pprint(*args):
+    print(f"[{jax.process_index()}]", *args)
 
 
 def main(
@@ -80,6 +84,7 @@ def main(
     # We instantiate the model first, because we need to preprocess sparse
     # inputs using the distributed embedding layer defined inside the model
     # class.
+    pprint("===== Initialising model =====")
     model = DLRMDCNV2(
         sparse_feature_configs=feature_configs,
         dense_lookup_features=dense_lookup_features,
@@ -99,6 +104,7 @@ def main(
     )
 
     # === Load dataset ===
+    pprint("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
         batch_size=global_batch_size,
         sparse_features=sparse_features,
@@ -181,6 +187,7 @@ def main(
 
 
 if __name__ == "__main__":
+    pprint("====== Launching train script =======")
     parser = argparse.ArgumentParser(
         description=(
             "Benchmark the DLRM-DCNv2 model on the Criteo dataset (MLPerf)"
@@ -191,8 +198,10 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    pprint(f"===== Reading config from {args.config_path} ======")
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
+    print(f"Config: {config}")
 
     # === Unpack args from config ===
 
@@ -232,11 +241,15 @@ if __name__ == "__main__":
     # For features which have vocabulary_size < embedding_threshold, we can
     # just do a normal dense lookup for those instead of have distributed
     # embeddings.
+    pprint("===== Removing small embedding tables from `sparse_features` =====")
     dense_lookup_features = []
     for sparse_feature in sparse_features:
         if sparse_feature["vocabulary_size"] < embedding_threshold:
             dense_lookup_features.append(sparse_feature)
             sparse_features.remove(sparse_feature)
+
+    pprint(f"Dense lookup features: {dense_lookup_features}")
+    pprint(f"Sparse features: {sparse_features}")
 
     main(
         file_pattern,
