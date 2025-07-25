@@ -108,9 +108,9 @@ def main(
         sparse_feature_preprocessor=model.embedding_layer,
     )()
 
-    # sample_generator = train_ds
-    # first_batch = next(sample_generator)
-    # features, label = first_batch
+    sample_generator = train_ds
+    first_batch = next(sample_generator)
+    features, label = first_batch
 
     # # === Print shapes on the current host ===
     # print("\n" + "=" * 30, flush=True)
