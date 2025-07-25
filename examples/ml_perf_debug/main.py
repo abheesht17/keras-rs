@@ -137,6 +137,9 @@ def main(
         print("--->", first_batch)
         break
 
+    # Train the model.
+    model.fit(train_generator, epochs=1)
+
     # # === Print shapes on the current host ===
     # print("\n" + "=" * 30, flush=True)
     # print(f"--- Data Shapes on Host {jax.process_index()} ---", flush=True)
@@ -188,8 +191,7 @@ def main(
     # for element in train_ds:
     #     model(element[0])
     #     break
-    # Train the model.
-    # model.fit(train_ds, epochs=1)
+
     # train_ds = create_dataset(
     #     file_pattern=file_pattern,
     #     per_replica_global_batch_size=global_batch_size,
