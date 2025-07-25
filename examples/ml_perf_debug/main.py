@@ -13,8 +13,6 @@ import keras_rs
 
 SEED = 1337
 
-print("---------->HELLOOOOOOOOO")
-
 
 # def pprint(*args):
 #     print(f"[{jax.process_index()}]", *args)
@@ -188,89 +186,89 @@ print("---------->HELLOOOOOOOOO")
 #     # )()
 
 
-# if __name__ == "__main__":
-#     pprint("====== Launching train script =======")
-#     parser = argparse.ArgumentParser(
-#         description=(
-#             "Benchmark the DLRM-DCNv2 model on the Criteo dataset (MLPerf)"
-#         )
-#     )
-#     parser.add_argument(
-#         "--config_path", type=str, help="Path to the YAML config file."
-#     )
-#     args = parser.parse_args()
+if __name__ == "__main__":
+    print("====== Launching train script =======")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Benchmark the DLRM-DCNv2 model on the Criteo dataset (MLPerf)"
+        )
+    )
+    parser.add_argument(
+        "--config_path", type=str, help="Path to the YAML config file."
+    )
+    args = parser.parse_args()
 
-#     pprint(f"===== Reading config from {args.config_path} ======")
-#     with open(args.config_path, "r") as f:
-#         config = yaml.safe_load(f)
-#     print(f"Config: {config}")
+    print(f"===== Reading config from {args.config_path} ======")
+    with open(args.config_path, "r") as f:
+        config = yaml.safe_load(f)
+    print(f"Config: {config}")
 
-#     # === Unpack args from config ===
+    # # === Unpack args from config ===
 
-#     # == Dataset config ==
-#     ds_cfg = config["dataset"]
-#     # File path
-#     file_pattern = ds_cfg["file_pattern"]
-#     # Features
-#     label = ds_cfg["label"]
-#     dense_features = ds_cfg["dense"]
-#     sparse_features = ds_cfg["sparse"]
+    # # == Dataset config ==
+    # ds_cfg = config["dataset"]
+    # # File path
+    # file_pattern = ds_cfg["file_pattern"]
+    # # Features
+    # label = ds_cfg["label"]
+    # dense_features = ds_cfg["dense"]
+    # sparse_features = ds_cfg["sparse"]
 
-#     # == Model config ==
-#     model_cfg = config["model"]
-#     # Embedding
-#     embedding_dim = model_cfg["embedding_dim"]
-#     allow_id_dropping = model_cfg["allow_id_dropping"]
-#     embedding_threshold = model_cfg["embedding_threshold"]
-#     max_ids_per_partition = model_cfg["max_ids_per_partition"]
-#     max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
-#     embedding_learning_rate = model_cfg["learning_rate"]
-#     # MLP
-#     bottom_mlp_dims = model_cfg["bottom_mlp_dims"]
-#     top_mlp_dims = model_cfg["top_mlp_dims"]
-#     # DCN
-#     num_dcn_layers = model_cfg["num_dcn_layers"]
-#     dcn_projection_dim = model_cfg["dcn_projection_dim"]
+    # # == Model config ==
+    # model_cfg = config["model"]
+    # # Embedding
+    # embedding_dim = model_cfg["embedding_dim"]
+    # allow_id_dropping = model_cfg["allow_id_dropping"]
+    # embedding_threshold = model_cfg["embedding_threshold"]
+    # max_ids_per_partition = model_cfg["max_ids_per_partition"]
+    # max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
+    # embedding_learning_rate = model_cfg["learning_rate"]
+    # # MLP
+    # bottom_mlp_dims = model_cfg["bottom_mlp_dims"]
+    # top_mlp_dims = model_cfg["top_mlp_dims"]
+    # # DCN
+    # num_dcn_layers = model_cfg["num_dcn_layers"]
+    # dcn_projection_dim = model_cfg["dcn_projection_dim"]
 
-#     # == Training config ==
-#     training_cfg = config["training"]
-#     learning_rate = training_cfg["learning_rate"]
-#     global_batch_size = training_cfg["global_batch_size"]
-#     num_steps = training_cfg["num_steps"]
-#     num_epochs = training_cfg["num_epochs"]
-#     log_frequency = training_cfg["log_frequency"]
+    # # == Training config ==
+    # training_cfg = config["training"]
+    # learning_rate = training_cfg["learning_rate"]
+    # global_batch_size = training_cfg["global_batch_size"]
+    # num_steps = training_cfg["num_steps"]
+    # num_epochs = training_cfg["num_epochs"]
+    # log_frequency = training_cfg["log_frequency"]
 
-#     # For features which have vocabulary_size < embedding_threshold, we can
-#     # just do a normal dense lookup for those instead of have distributed
-#     # embeddings.
-#     pprint("===== Removing small embedding tables from `sparse_features` =====")
-#     dense_lookup_features = []
-#     for sparse_feature in sparse_features:
-#         if sparse_feature["vocabulary_size"] < embedding_threshold:
-#             dense_lookup_features.append(sparse_feature)
-#             sparse_features.remove(sparse_feature)
+    # # For features which have vocabulary_size < embedding_threshold, we can
+    # # just do a normal dense lookup for those instead of have distributed
+    # # embeddings.
+    # pprint("===== Removing small embedding tables from `sparse_features` =====")
+    # dense_lookup_features = []
+    # for sparse_feature in sparse_features:
+    #     if sparse_feature["vocabulary_size"] < embedding_threshold:
+    #         dense_lookup_features.append(sparse_feature)
+    #         sparse_features.remove(sparse_feature)
 
-#     pprint(f"Dense lookup features: {dense_lookup_features}")
-#     pprint(f"Sparse features: {sparse_features}")
+    # pprint(f"Dense lookup features: {dense_lookup_features}")
+    # pprint(f"Sparse features: {sparse_features}")
 
-#     main(
-#         file_pattern,
-#         dense_features,
-#         sparse_features,
-#         dense_lookup_features,
-#         label,
-#         embedding_dim,
-#         allow_id_dropping,
-#         max_ids_per_partition,
-#         max_unique_ids_per_partition,
-#         embedding_learning_rate,
-#         bottom_mlp_dims,
-#         top_mlp_dims,
-#         num_dcn_layers,
-#         dcn_projection_dim,
-#         learning_rate,
-#         global_batch_size,
-#         num_steps,
-#         num_epochs,
-#         log_frequency,
-#     )
+    # main(
+    #     file_pattern,
+    #     dense_features,
+    #     sparse_features,
+    #     dense_lookup_features,
+    #     label,
+    #     embedding_dim,
+    #     allow_id_dropping,
+    #     max_ids_per_partition,
+    #     max_unique_ids_per_partition,
+    #     embedding_learning_rate,
+    #     bottom_mlp_dims,
+    #     top_mlp_dims,
+    #     num_dcn_layers,
+    #     dcn_projection_dim,
+    #     learning_rate,
+    #     global_batch_size,
+    #     num_steps,
+    #     num_epochs,
+    #     log_frequency,
+    # )
