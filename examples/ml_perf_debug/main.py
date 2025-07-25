@@ -109,9 +109,10 @@ def main(
     )
     distribution.distribute_dataset(train_ds)
 
-    sample_generator = train_ds
-    first_batch = next(sample_generator)
-    features, label = first_batch
+    for first_batch in train_ds:
+        features, label = first_batch
+        print(features, label)
+        break
 
     # def generator():
     #     for example in dataset:
