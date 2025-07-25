@@ -1,11 +1,12 @@
 import sys
 sys.path.append("/home/abheesht_google_com/keras-rs")
 import argparse
-import os
+import jax
 
+
+import os
 os.environ["KERAS_BACKEND"] = "jax"
 
-import jax
 import keras
 import yaml
 from dataloader import create_dummy_dataset
