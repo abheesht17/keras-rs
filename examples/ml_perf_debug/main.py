@@ -124,7 +124,7 @@ def main(
             to_yield_x = {
                 "dense_features": example["dense_features"],
                 "preprocessed_sparse_features": model.embedding_layer.preprocess(
-                    example["sparse_features"], training=False
+                    example["sparse_features"], training=True
                 ),
             }
             if "dense_lookups" in example:
