@@ -631,17 +631,18 @@ class DistributedEmbedding(keras.layers.Layer):
         print("BRUHHHHHH")
         # Verify input structure.
         keras.tree.assert_same_structure(self._feature_configs, inputs)
-        return inputs
-        # if not self.built:
-        #     input_shapes = keras.tree.map_structure_up_to(
-        #         self._feature_configs,
-        #         lambda array: backend.standardize_shape(array.shape),
-        #         inputs,
-        #     )
-        #     self.build(input_shapes)
 
-        # # Go from deeply nested structure of inputs to flat inputs.
-        # flat_inputs = keras.tree.flatten(inputs)
+        if not self.built:
+            input_shapes = keras.tree.map_structure_up_to(
+                self._feature_configs,
+                lambda array: backend.standardize_shape(array.shape),
+                inputs,
+            )
+            self.build(input_shapes)
+
+        # Go from deeply nested structure of inputs to flat inputs.
+        flat_inputs = keras.tree.flatten(inputs)
+        return inputs
 
         # # Go from flat to nested dict placement -> path -> input.
         # placement_to_path_to_inputs = keras.tree.pack_sequence_as(
