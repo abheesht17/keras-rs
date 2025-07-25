@@ -629,10 +629,9 @@ class DistributedEmbedding(keras.layers.Layer):
             `inputs` argument of the layer.
         """
         print("BRUHHHHHH")
+        # Verify input structure.
+        keras.tree.assert_same_structure(self._feature_configs, inputs)
         return inputs
-        # # Verify input structure.
-        # keras.tree.assert_same_structure(self._feature_configs, inputs)
-
         # if not self.built:
         #     input_shapes = keras.tree.map_structure_up_to(
         #         self._feature_configs,
