@@ -39,7 +39,7 @@ def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
     for dense_lookup_feature in dense_lookup_features:
         vocabulary_size = dense_lookup_feature["vocabulary_size"]
         multi_hot_size = dense_lookup_feature["multi_hot_size"]
-        idx = sparse_feature["name"].split("-")[-1]
+        idx = dense_lookup_feature["name"].split("-")[-1]
 
         # TODO: We don't need this custom renaming. Remove later, when we
         # shift from dummy data to actual data.
