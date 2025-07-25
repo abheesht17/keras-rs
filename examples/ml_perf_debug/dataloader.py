@@ -78,9 +78,7 @@ def create_dummy_dataset(
             to_yield_x = {
                 "dense_features": example["dense_features"],
                 "preprocessed_sparse_features": (
-                    sparse_feature_preprocessor.preprocess(
-                        example["sparse_features"], training=True
-                    )
+                    example["sparse_features"], training=True
                 ),
             }
             if "dense_lookups" in example:
