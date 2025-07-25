@@ -112,9 +112,12 @@ def main(
     distribution.distribute_dataset(train_ds)
     distribution.auto_shard_dataset = False
 
+    print("FIRST BATCH")
     for first_batch in train_ds:
         print(first_batch)
         break
+
+    print(feature_configs)
 
     def generator(dataset):
         for example in dataset:
