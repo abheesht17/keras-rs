@@ -105,7 +105,6 @@ def main(
         batch_size=global_batch_size,
         sparse_features=sparse_features,
         dense_lookup_features=dense_lookup_features,
-        sparse_feature_preprocessor=model.embedding_layer,
     )
     distribution.distribute_dataset(train_ds)
 
@@ -186,7 +185,6 @@ def main(
     # model.fit(train_ds, epochs=1)
     # train_ds = create_dataset(
     #     file_pattern=file_pattern,
-    #     sparse_feature_preprocessor=model.embedding_layer,
     #     per_replica_global_batch_size=global_batch_size,
     #     dense_features=dense_features,
     #     sparse_features=[f["name"] for f in sparse_features],
