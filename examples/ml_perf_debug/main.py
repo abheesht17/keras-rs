@@ -36,7 +36,7 @@ def main(
     log_frequency,
 ):
     # Set DDP as Keras distribution strategy
-    distribution = keras.distribution.DataParallel(auto_shard_dataset=False)
+    distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
     # === Distributed embeddings' configs for sparse features ===
@@ -107,6 +107,7 @@ def main(
         dense_lookup_features=dense_lookup_features,
     )
     distribution.distribute_dataset(train_ds)
+    distribution.auto_shard_dataset = False
 
     for first_batch in train_ds:
         print(first_batch)
