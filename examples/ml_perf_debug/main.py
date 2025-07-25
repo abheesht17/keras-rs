@@ -93,20 +93,20 @@ def main(
         dtype="float32",
         name="dlrm_dcn_v2",
     )
-    # model.compile(
-    #     loss=keras.losses.BinaryCrossentropy(),
-    #     optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
-    #     metrics=[keras.metrics.BinaryAccuracy()],
-    # )
+    model.compile(
+        loss=keras.losses.BinaryCrossentropy(),
+        optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
+        metrics=[keras.metrics.BinaryAccuracy()],
+    )
 
-    # # === Load dataset ===
-    # print("===== Loading dataset =====")
-    # train_ds = create_dummy_dataset(
-    #     batch_size=global_batch_size,
-    #     sparse_features=sparse_features,
-    #     dense_lookup_features=dense_lookup_features,
-    #     sparse_feature_preprocessor=model.embedding_layer,
-    # )()
+    # === Load dataset ===
+    print("===== Loading dataset =====")
+    train_ds = create_dummy_dataset(
+        batch_size=global_batch_size,
+        sparse_features=sparse_features,
+        dense_lookup_features=dense_lookup_features,
+        sparse_feature_preprocessor=model.embedding_layer,
+    )()
 
     # sample_generator = train_ds
     # first_batch = next(sample_generator)
