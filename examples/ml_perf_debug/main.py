@@ -113,20 +113,23 @@ def main(
         print(first_batch)
         break
 
-    # def generator():
-    #     for example in dataset:
-    #         to_yield_x = {
-    #             "dense_features": example["dense_features"],
-    #             "preprocessed_sparse_features": (
-    #                 example["sparse_features"]
-    #             ),
-    #         }
-    #         if "dense_lookups" in example:
-    #             to_yield_x["dense_lookups"] = example["dense_lookups"]
-    #         to_yield_y = example["clicked"]
-    #         yield (to_yield_x, to_yield_y)
+    def generator(dataset):
+        for example in dataset:
+            to_yield_x = {
+                "dense_features": example["dense_features"],
+                "preprocessed_sparse_features": model.embedding_layer.preprocess(
+                    example["sparse_features"], training=True
+                ),
+            }
+            if "dense_lookups" in example:
+                to_yield_x["dense_lookups"] = example["dense_lookups"]
+            to_yield_y = example["clicked"]
+            yield to_yield_x, to_yield_y
 
-    # return generator
+    train_generator = generator(train_ds)
+    for first_batch in train_generator:
+        print("--->", first_batch)
+        break
 
     # # === Print shapes on the current host ===
     # print("\n" + "=" * 30, flush=True)
