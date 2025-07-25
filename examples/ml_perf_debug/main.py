@@ -93,66 +93,66 @@ def main(
         dtype="float32",
         name="dlrm_dcn_v2",
     )
-    model.compile(
-        loss=keras.losses.BinaryCrossentropy(),
-        optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
-        metrics=[keras.metrics.BinaryAccuracy()],
-    )
+    # model.compile(
+    #     loss=keras.losses.BinaryCrossentropy(),
+    #     optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
+    #     metrics=[keras.metrics.BinaryAccuracy()],
+    # )
 
-    # === Load dataset ===
-    print("===== Loading dataset =====")
-    train_ds = create_dummy_dataset(
-        batch_size=global_batch_size,
-        sparse_features=sparse_features,
-        dense_lookup_features=dense_lookup_features,
-        sparse_feature_preprocessor=model.embedding_layer,
-    )()
+    # # === Load dataset ===
+    # print("===== Loading dataset =====")
+    # train_ds = create_dummy_dataset(
+    #     batch_size=global_batch_size,
+    #     sparse_features=sparse_features,
+    #     dense_lookup_features=dense_lookup_features,
+    #     sparse_feature_preprocessor=model.embedding_layer,
+    # )()
 
-    sample_generator = train_ds
-    first_batch = next(sample_generator)
-    features, label = first_batch
+    # sample_generator = train_ds
+    # first_batch = next(sample_generator)
+    # features, label = first_batch
 
-    # === Print shapes on the current host ===
-    print("\n" + "=" * 30, flush=True)
-    print(f"--- Data Shapes on Host {jax.process_index()} ---", flush=True)
-    print(f"Label shape: {label.shape}", flush=True)
-    print(
-        f"Dense features shape: {features['dense_features'].shape}", flush=True
-    )
+    # # === Print shapes on the current host ===
+    # print("\n" + "=" * 30, flush=True)
+    # print(f"--- Data Shapes on Host {jax.process_index()} ---", flush=True)
+    # print(f"Label shape: {label.shape}", flush=True)
+    # print(
+    #     f"Dense features shape: {features['dense_features'].shape}", flush=True
+    # )
 
-    print("Preprocessed sparse features:", flush=True)
-    preprocessed_sparse = features["preprocessed_sparse_features"]
+    # print("Preprocessed sparse features:", flush=True)
+    # preprocessed_sparse = features["preprocessed_sparse_features"]
 
-    if isinstance(preprocessed_sparse, dict):
-        for placement, placement_data in preprocessed_sparse.get(
-            "preprocessed_inputs_per_placement", {}
-        ).items():
-            print(f"  Placement '{placement}':", flush=True)
-            for table_group, coo_matrix in placement_data.get(
-                "inputs", {}
-            ).items():
-                print(f"    Table Group '{table_group[:30]}...':", flush=True)
-                if hasattr(coo_matrix, "row_ids"):
-                    print(
-                        f"      - row_ids shape: {coo_matrix.row_ids.shape}",
-                        flush=True,
-                    )
-                if hasattr(coo_matrix, "col_ids"):
-                    print(
-                        f"      - col_ids shape: {coo_matrix.col_ids.shape}",
-                        flush=True,
-                    )
-                if hasattr(coo_matrix, "values"):
-                    print(
-                        f"      - values shape: {coo_matrix.values.shape}",
-                        flush=True,
-                    )
-    else:
-        print(
-            f"  Unexpected structure type: {type(preprocessed_sparse)}",
-            flush=True,
-        )
-    print("=" * 30 + "\n", flush=True)
+    # if isinstance(preprocessed_sparse, dict):
+    #     for placement, placement_data in preprocessed_sparse.get(
+    #         "preprocessed_inputs_per_placement", {}
+    #     ).items():
+    #         print(f"  Placement '{placement}':", flush=True)
+    #         for table_group, coo_matrix in placement_data.get(
+    #             "inputs", {}
+    #         ).items():
+    #             print(f"    Table Group '{table_group[:30]}...':", flush=True)
+    #             if hasattr(coo_matrix, "row_ids"):
+    #                 print(
+    #                     f"      - row_ids shape: {coo_matrix.row_ids.shape}",
+    #                     flush=True,
+    #                 )
+    #             if hasattr(coo_matrix, "col_ids"):
+    #                 print(
+    #                     f"      - col_ids shape: {coo_matrix.col_ids.shape}",
+    #                     flush=True,
+    #                 )
+    #             if hasattr(coo_matrix, "values"):
+    #                 print(
+    #                     f"      - values shape: {coo_matrix.values.shape}",
+    #                     flush=True,
+    #                 )
+    # else:
+    #     print(
+    #         f"  Unexpected structure type: {type(preprocessed_sparse)}",
+    #         flush=True,
+    #     )
+    # print("=" * 30 + "\n", flush=True)
 
     # for element in train_ds:
     #     print("--->", element[0])
