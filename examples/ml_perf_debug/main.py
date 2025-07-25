@@ -135,10 +135,11 @@ def main(
     train_generator = generator(train_ds)
     for first_batch in train_generator:
         print("--->", first_batch)
+        model(first_batch[0])
         break
 
     # Train the model.
-    model.fit(train_generator, epochs=1)
+    # model.fit(train_generator, epochs=1)
 
     # # === Print shapes on the current host ===
     # print("\n" + "=" * 30, flush=True)
