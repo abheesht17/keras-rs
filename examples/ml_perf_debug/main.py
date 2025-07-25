@@ -110,8 +110,7 @@ def main(
     distribution.distribute_dataset(train_ds)
 
     for first_batch in train_ds:
-        features, label = first_batch
-        print(features, label)
+        print(first_batch)
         break
 
     # def generator():
