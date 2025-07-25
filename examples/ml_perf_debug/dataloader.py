@@ -67,7 +67,10 @@ def create_dummy_dataset(
         batch_size, sparse_features, dense_lookup_features
     )
 
-    dataset = tf.data.Dataset.from_tensors(dummy_data).repeat(16)
+    dataset = (
+        tf.data.Dataset.from_tensors(dummy_data)
+        .repeat(16)
+    )
     return dataset
 
 
