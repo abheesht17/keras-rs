@@ -36,8 +36,8 @@ def main(
     log_frequency,
 ):
     # Set DDP as Keras distribution strategy
-    data_parallel = keras.distribution.DataParallel(auto_shard_dataset=False)
-    keras.distribution.set_distribution(data_parallel)
+    distribution = keras.distribution.DataParallel(auto_shard_dataset=False)
+    keras.distribution.set_distribution(distribution)
 
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
@@ -106,11 +106,27 @@ def main(
         sparse_features=sparse_features,
         dense_lookup_features=dense_lookup_features,
         sparse_feature_preprocessor=model.embedding_layer,
-    )()
+    )
+    distribution.distribute_dataset(train_ds)
 
     sample_generator = train_ds
     first_batch = next(sample_generator)
     features, label = first_batch
+
+    # def generator():
+    #     for example in dataset:
+    #         to_yield_x = {
+    #             "dense_features": example["dense_features"],
+    #             "preprocessed_sparse_features": (
+    #                 example["sparse_features"]
+    #             ),
+    #         }
+    #         if "dense_lookups" in example:
+    #             to_yield_x["dense_lookups"] = example["dense_lookups"]
+    #         to_yield_y = example["clicked"]
+    #         yield (to_yield_x, to_yield_y)
+
+    # return generator
 
     # # === Print shapes on the current host ===
     # print("\n" + "=" * 30, flush=True)

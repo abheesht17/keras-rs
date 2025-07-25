@@ -67,26 +67,8 @@ def create_dummy_dataset(
         batch_size, sparse_features, dense_lookup_features
     )
 
-    dataset = (
-        tf.data.Dataset.from_tensors(dummy_data)
-        .repeat(16)
-        .shard(jax.process_count(), jax.process_index())
-    )
-
-    def generator():
-        for example in dataset:
-            to_yield_x = {
-                "dense_features": example["dense_features"],
-                "preprocessed_sparse_features": (
-                    example["sparse_features"]
-                ),
-            }
-            if "dense_lookups" in example:
-                to_yield_x["dense_lookups"] = example["dense_lookups"]
-            to_yield_y = example["clicked"]
-            yield (to_yield_x, to_yield_y)
-
-    return generator
+    dataset = tf.data.Dataset.from_tensors(dummy_data).repeat(16)
+    return dataset
 
 
 # TODO: Write correct data loading logic once we have access to the dataset.
