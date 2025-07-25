@@ -129,7 +129,7 @@ def main(
             if "dense_lookups" in example:
                 to_yield_x["dense_lookups"] = example["dense_lookups"]
             to_yield_y = example["clicked"]
-            yield to_yield_x, to_yield_y
+            yield (to_yield_x, to_yield_y)
 
     train_generator = generator(train_ds)
     for first_batch in train_generator:
