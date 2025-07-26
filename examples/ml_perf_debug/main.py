@@ -36,6 +36,7 @@ def main(
     num_epochs,
     log_frequency,
 ):
+    print(f"[DEBUG] Value inside main function: max_ids_per_partition = {max_ids_per_partition}")
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
@@ -239,6 +240,7 @@ if __name__ == "__main__":
     embedding_threshold = model_cfg["embedding_threshold"]
     max_ids_per_partition = model_cfg["max_ids_per_partition"]
     max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
+    print(f"[DEBUG] Value from YAML: max_ids_per_partition = {max_ids_per_partition}")
     embedding_learning_rate = model_cfg["learning_rate"]
     # MLP
     bottom_mlp_dims = model_cfg["bottom_mlp_dims"]
