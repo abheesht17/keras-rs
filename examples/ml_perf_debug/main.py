@@ -21,7 +21,6 @@ def main(
     file_pattern,
     dense_features,
     sparse_features,
-    dense_lookup_features,
     label,
     embedding_dim,
     allow_id_dropping,
@@ -54,6 +53,9 @@ def main(
         )
         vocabulary_size = sparse_feature["vocabulary_size"]
 
+        # For features which have vocabulary_size < embedding_threshold, we can
+        # just do a normal dense lookup for those instead of have distributed
+        # embeddings.
         table_config = keras_rs.layers.TableConfig(
             name=f"{feature_name}_table",
             vocabulary_size=vocabulary_size,
@@ -66,7 +68,7 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            placement="sparsecore",
+            placement=("default_device" if vocabulary_size < embedding_threshold else "sparsecore"),
             max_ids_per_partition=max_ids_per_partition,
             max_unique_ids_per_partition=max_unique_ids_per_partition,
         )
@@ -86,7 +88,6 @@ def main(
     print("===== Initialising model =====")
     model = DLRMDCNV2(
         sparse_feature_configs=feature_configs,
-        dense_lookup_features=dense_lookup_features,
         embedding_dim=embedding_dim,
         bottom_mlp_dims=bottom_mlp_dims,
         top_mlp_dims=top_mlp_dims,
@@ -107,30 +108,18 @@ def main(
     train_ds = create_dummy_dataset(
         batch_size=global_batch_size,
         sparse_features=sparse_features,
-        dense_lookup_features=dense_lookup_features,
     )
     distribution.distribute_dataset(train_ds)
     distribution.auto_shard_dataset = False
 
-    # print("FIRST BATCH")
-    # for first_batch in train_ds:
-    #     print(first_batch)
-    #     break
-
-    # print("------>", feature_configs)
-
     def generator(dataset):
         for example in dataset:
-            to_yield_x = {
+            yielf ({
                 "dense_features": example["dense_features"],
                 "preprocessed_sparse_features": model.embedding_layer.preprocess(
                     example["sparse_features"], training=True
                 ),
-            }
-            if "dense_lookups" in example:
-                to_yield_x["dense_lookups"] = example["dense_lookups"]
-            to_yield_y = example["clicked"]
-            yield (to_yield_x, to_yield_y)
+            }, example["clicked"])
 
     train_generator = generator(train_ds)
     for first_batch in train_generator:
@@ -260,24 +249,10 @@ if __name__ == "__main__":
     num_epochs = training_cfg["num_epochs"]
     log_frequency = training_cfg["log_frequency"]
 
-    # For features which have vocabulary_size < embedding_threshold, we can
-    # just do a normal dense lookup for those instead of have distributed
-    # embeddings.
-    print("===== Removing small embedding tables from `sparse_features` =====")
-    dense_lookup_features = []
-    for sparse_feature in sparse_features:
-        if sparse_feature["vocabulary_size"] < embedding_threshold:
-            dense_lookup_features.append(sparse_feature)
-            sparse_features.remove(sparse_feature)
-
-    print(f"Dense lookup features: {dense_lookup_features}")
-    print(f"Sparse features: {sparse_features}")
-
     main(
         file_pattern,
         dense_features,
         sparse_features,
-        dense_lookup_features,
         label,
         embedding_dim,
         allow_id_dropping,

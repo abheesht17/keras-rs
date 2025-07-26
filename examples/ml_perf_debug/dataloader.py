@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 
 
-def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
+def _get_dummy_batch(batch_size, sparse_features):
     """Returns a dummy batch of data in the final desired structure."""
 
     # Labels.
@@ -34,37 +34,13 @@ def _get_dummy_batch(batch_size, sparse_features, dense_lookup_features):
             dtype=np.int64,
         )
 
-    # Dense lookup features.
-    dense_lookups = {}
-    for dense_lookup_feature in dense_lookup_features:
-        vocabulary_size = dense_lookup_feature["vocabulary_size"]
-        multi_hot_size = dense_lookup_feature["multi_hot_size"]
-        idx = dense_lookup_feature["name"].split("-")[-1]
-
-        # TODO: We don't need this custom renaming. Remove later, when we
-        # shift from dummy data to actual data.
-        dense_lookups[f"cat_{idx}_id"] = np.random.randint(
-            low=0,
-            high=vocabulary_size,
-            size=(batch_size, multi_hot_size),
-            dtype=np.int64,
-        )
-
     data["sparse_features"] = sparse_features_dict
-    if dense_lookups:
-        data["dense_lookups"] = dense_lookups
     return data
 
 
-def create_dummy_dataset(
-    batch_size,
-    sparse_features,
-    dense_lookup_features,
-):
+def create_dummy_dataset(batch_size, sparse_features):
     """Creates a TF dataset from cached dummy data of the final batch size."""
-    dummy_data = _get_dummy_batch(
-        batch_size, sparse_features, dense_lookup_features
-    )
+    dummy_data = _get_dummy_batch(batch_size, sparse_features)
 
     dataset = (
         tf.data.Dataset.from_tensors(dummy_data)

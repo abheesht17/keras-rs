@@ -18,7 +18,6 @@ class DLRMDCNV2(keras.Model):
     def __init__(
         self,
         sparse_feature_configs,
-        dense_lookup_features,
         embedding_dim,
         bottom_mlp_dims,
         top_mlp_dims,
@@ -49,15 +48,6 @@ class DLRMDCNV2(keras.Model):
             dtype=dtype,
             name="embedding_layer",
         )
-        # Embedding layers for dense lookup features
-        self.dense_embedding_layers = [
-            keras.layers.Embedding(
-                input_dim=dense_lookup_feature["vocabulary_size"],
-                output_dim=embedding_dim,
-                name=f"dense_embedding_layer_{i}",
-            )
-            for i, dense_lookup_feature in enumerate(dense_lookup_features)
-        ]
         # DCN for "interactions"
         self.dcn_block = DCNBlock(
             num_layers=num_dcn_layers,
@@ -78,7 +68,6 @@ class DLRMDCNV2(keras.Model):
 
         # === Passed attributes ===
         self.sparse_feature_configs = sparse_feature_configs
-        self.dense_lookup_features = dense_lookup_features
         self.embedding_dim = embedding_dim
         self.bottom_mlp_dims = bottom_mlp_dims
         self.top_mlp_dims = top_mlp_dims
@@ -93,21 +82,10 @@ class DLRMDCNV2(keras.Model):
         # Embed features.
         dense_output = self.bottom_mlp(dense_features)
         sparse_embeddings = self.embedding_layer(sparse_features)
-        dense_embeddings = []
-        if self.dense_lookup_features:
-            dense_lookups = inputs["dense_lookups"]
-            for lookup, embedding_layer in zip(
-                dense_lookups, self.dense_embedding_layers
-            ):
-                embedding = embedding_layer(lookup)
-                embedding = ops.sum(embedding, axis=-2)
-                dense_embeddings.append(embedding)
-
-            dense_embeddings = ops.concatenate(dense_embeddings, axis=-1)
 
         # Interaction
         x = ops.concatenate(
-            [dense_output, *dense_embeddings, *sparse_embeddings.values()],
+            [dense_output, *sparse_embeddings.values()],
             axis=-1,
         )
         x = self.dcn_block(x)
