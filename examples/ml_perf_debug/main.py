@@ -1,10 +1,9 @@
 import sys
+
 sys.path.append("/home/abheesht_google_com/keras-rs")
 import argparse
-import jax
-
-
 import os
+
 os.environ["KERAS_BACKEND"] = "jax"
 
 import keras
@@ -68,7 +67,11 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            placement=("default_device" if vocabulary_size < embedding_threshold else "sparsecore"),
+            placement=(
+                "default_device"
+                if vocabulary_size < embedding_threshold
+                else "sparsecore"
+            ),
             max_ids_per_partition=max_ids_per_partition,
             max_unique_ids_per_partition=max_unique_ids_per_partition,
         )
@@ -114,12 +117,15 @@ def main(
 
     def generator(dataset):
         for example in dataset:
-            yielf ({
-                "dense_features": example["dense_features"],
-                "preprocessed_sparse_features": model.embedding_layer.preprocess(
-                    example["sparse_features"], training=True
-                ),
-            }, example["clicked"])
+            yield (
+                {
+                    "dense_features": example["dense_features"],
+                    "preprocessed_sparse_features": model.embedding_layer.preprocess(
+                        example["sparse_features"], training=True
+                    ),
+                },
+                example["clicked"],
+            )
 
     train_generator = generator(train_ds)
     for first_batch in train_generator:

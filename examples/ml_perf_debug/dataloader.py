@@ -1,4 +1,3 @@
-import jax
 import numpy as np
 import tensorflow as tf
 
@@ -42,10 +41,7 @@ def create_dummy_dataset(batch_size, sparse_features):
     """Creates a TF dataset from cached dummy data of the final batch size."""
     dummy_data = _get_dummy_batch(batch_size, sparse_features)
 
-    dataset = (
-        tf.data.Dataset.from_tensors(dummy_data)
-        .repeat(16)
-    )
+    dataset = tf.data.Dataset.from_tensors(dummy_data).repeat(16)
     return dataset
 
 
