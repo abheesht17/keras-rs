@@ -47,9 +47,9 @@ model:
   embedding_dim: 128
   allow_id_dropping: true
   embedding_threshold: 21000
-  max_ids_per_partition: 2048
-  max_unique_ids_per_partition: 512
-  learning_rate: 0.01
+  max_ids_per_partition: 3277
+  max_unique_ids_per_partition: 819
+  learning_rate: 0.005
 
   # MLP
   bottom_mlp_dims: [512, 256, 128]
@@ -61,7 +61,7 @@ model:
 
 # === Training Hyperparameters ===
 training:
-  global_batch_size: 16384
+  global_batch_size: 8192
   num_steps: 28000
   num_epochs: 1
   log_frequency: 10
