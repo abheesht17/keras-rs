@@ -129,9 +129,9 @@ def main(
             )
 
     train_generator = generator(train_ds)
-    for first_batch in train_generator:
-        model(first_batch[0])
-        break
+    # for first_batch in train_generator:
+    #     model(first_batch[0])
+    #     break
 
     # Train the model.
     model.fit(train_generator, epochs=1)
