@@ -62,7 +62,10 @@ def main(
             embedding_dim=embedding_dim,
             # TODO(abheesht): Verify.
             initializer=keras.initializers.VarianceScaling(
-                scale=1.0, mode="fan_in", distribution="uniform"
+                scale=1.0,
+                mode="fan_in",
+                distribution="uniform",
+                seed=SEED,
             ),
             optimizer=keras.optimizers.Adagrad(
                 learning_rate=embedding_learning_rate
