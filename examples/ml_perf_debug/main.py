@@ -32,9 +32,7 @@ def main(
     dcn_projection_dim,
     learning_rate,
     global_batch_size,
-    num_steps,
     num_epochs,
-    log_frequency,
 ):
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
@@ -138,7 +136,7 @@ def main(
                 example["clicked"],
             )
 
-    train_generator = generator(train_ds, training)
+    train_generator = generator(train_ds, training=True)
     for first_batch in train_generator:
         model(first_batch[0])
         break
@@ -195,9 +193,7 @@ if __name__ == "__main__":
     training_cfg = config["training"]
     learning_rate = training_cfg["learning_rate"]
     global_batch_size = training_cfg["global_batch_size"]
-    num_steps = training_cfg["num_steps"]
     num_epochs = training_cfg["num_epochs"]
-    log_frequency = training_cfg["log_frequency"]
 
     main(
         file_pattern,
@@ -215,7 +211,5 @@ if __name__ == "__main__":
         dcn_projection_dim,
         learning_rate,
         global_batch_size,
-        num_steps,
         num_epochs,
-        log_frequency,
     )

@@ -62,7 +62,5 @@ model:
 # === Training Hyperparameters ===
 training:
   global_batch_size: 512
-  num_steps: 28000
   num_epochs: 1
-  log_frequency: 10
   learning_rate: 0.005

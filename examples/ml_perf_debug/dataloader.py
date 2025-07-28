@@ -5,27 +5,25 @@ import tensorflow as tf
 def _get_dummy_batch(batch_size, sparse_features):
     """Returns a dummy batch of data in the final desired structure."""
 
-    # Labels.
+    # Labels
     data = {
         "clicked": np.random.randint(0, 2, size=(batch_size,), dtype=np.int64)
     }
 
-    # Dense features.
+    # Dense features
     dense_features_list = [
         np.random.uniform(0.0, 0.9, size=(batch_size, 1)).astype(np.float32)
         for _ in range(13)
     ]
     data["dense_features"] = np.concatenate(dense_features_list, axis=-1)
 
-    # Sparse features.
+    # Sparse features
     sparse_features_dict = {}
     for sparse_feature in sparse_features:
         vocabulary_size = sparse_feature["vocabulary_size"]
         multi_hot_size = sparse_feature["multi_hot_size"]
         idx = sparse_feature["name"].split("-")[-1]
 
-        # TODO: We don't need this custom renaming. Remove later, when we
-        # shift from dummy data to actual data.
         sparse_features_dict[f"cat_{idx}_id"] = np.random.randint(
             low=0,
             high=vocabulary_size,
@@ -45,29 +43,27 @@ def create_dummy_dataset(batch_size, sparse_features):
     return dataset
 
 
-# TODO: Write correct data loading logic once we have access to the dataset.
+def get_feature_spec(batch_size, dense_features, sparse_features, label):
+    feature_spec = {
+        label: tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.int64,
+        )
+    }
 
-# def get_feature_spec(batch_size, dense_features, sparse_features, label):
-#     feature_spec = {
-#         label: tf.io.FixedLenFeature(
-#             [batch_size],
-#             dtype=tf.int64,
-#         )
-#     }
+    for dense_feature in dense_features:
+        feature_spec[dense_feature] = tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.float32,
+        )
 
-#     for dense_feature in dense_features:
-#         feature_spec[dense_feature] = tf.io.FixedLenFeature(
-#             [batch_size],
-#             dtype=tf.float32,
-#         )
+    for sparse_feature in sparse_features:
+        feature_spec[sparse_feature] = tf.io.FixedLenFeature(
+            [batch_size],
+            dtype=tf.string,
+        )
 
-#     for sparse_feature in sparse_features:
-#         feature_spec[sparse_feature] = tf.io.FixedLenFeature(
-#             [batch_size],
-#             dtype=tf.string,
-#         )
-
-#     return feature_spec
+    return feature_spec
 
 
 # def preprocess(
