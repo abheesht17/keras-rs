@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TypeAlias
 
 import keras
 from keras import ops
@@ -6,6 +6,7 @@ from keras import ops
 import keras_rs
 
 Tensor: TypeAlias = Any
+
 
 def _clone_initializer(
     initializer: keras.initializers.Initializer,
