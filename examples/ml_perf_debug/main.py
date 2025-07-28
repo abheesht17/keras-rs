@@ -36,7 +36,6 @@ def main(
     num_epochs,
     log_frequency,
 ):
-    print(f"[DEBUG] Value inside main function: max_ids_per_partition = {max_ids_per_partition}")
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
@@ -44,8 +43,8 @@ def main(
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
     for sparse_feature in sparse_features:
-        # TODO: We don't need this custom renaming. Remove later, when we
-        # shift from dummy data to actual data.
+        # Rename these features to something shorter; was facing some weird
+        # issues with the longer names.
         feature_name = (
             sparse_feature["name"]
             .replace("-", "_")
@@ -75,14 +74,16 @@ def main(
                 "default_device"
                 if vocabulary_size < embedding_threshold
                 else "sparsecore"
-            ),
+            ),  # normal embeddings when vocabulary_size < embedding_threshold
+            # TODO: These two args are not getting passed down to
+            # `jax-tpu-embedding` properly, seems like.
             max_ids_per_partition=max_ids_per_partition,
             max_unique_ids_per_partition=max_unique_ids_per_partition,
         )
         feature_configs[f"{feature_name}_id"] = keras_rs.layers.FeatureConfig(
             name=feature_name.replace("id", ""),
             table=table_config,
-            # TODO(abheesht): Verify whether it should be `(bsz, 1)` or
+            # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
             input_shape=(global_batch_size, 1),
             output_shape=(global_batch_size, embedding_dim),
@@ -95,7 +96,6 @@ def main(
     print("===== Initialising model =====")
     model = DLRMDCNV2(
         sparse_feature_configs=feature_configs,
-        embedding_dim=embedding_dim,
         bottom_mlp_dims=bottom_mlp_dims,
         top_mlp_dims=top_mlp_dims,
         num_dcn_layers=num_dcn_layers,
@@ -116,22 +116,29 @@ def main(
         batch_size=global_batch_size,
         sparse_features=sparse_features,
     )
-    distribution.distribute_dataset(train_ds)
-    distribution.auto_shard_dataset = False
+    # For the multi-host case, the dataset has to be distributed manually.
+    # See note here:
+    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
+    if jax.process_count() > 1:
+        distribution.distribute_dataset(train_ds)
+        distribution.auto_shard_dataset = False
 
-    def generator(dataset):
+    def generator(dataset, training=False):
+        """Converts tf.data Dataset to a Python generator and preprocesses
+        sparse features.
+        """
         for example in dataset:
             yield (
                 {
                     "dense_features": example["dense_features"],
                     "preprocessed_sparse_features": model.embedding_layer.preprocess(
-                        example["sparse_features"], training=True
+                        example["sparse_features"], training=training
                     ),
                 },
                 example["clicked"],
             )
 
-    train_generator = generator(train_ds)
+    train_generator = generator(train_ds, training)
     for first_batch in train_generator:
         model(first_batch[0])
         break
@@ -243,7 +250,6 @@ if __name__ == "__main__":
     embedding_threshold = model_cfg["embedding_threshold"]
     max_ids_per_partition = model_cfg["max_ids_per_partition"]
     max_unique_ids_per_partition = model_cfg["max_unique_ids_per_partition"]
-    print(f"[DEBUG] Value from YAML: max_ids_per_partition = {max_ids_per_partition}")
     embedding_learning_rate = model_cfg["learning_rate"]
     # MLP
     bottom_mlp_dims = model_cfg["bottom_mlp_dims"]

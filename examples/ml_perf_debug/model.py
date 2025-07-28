@@ -1,10 +1,30 @@
+from typing import Any
+
 import keras
 from keras import ops
 
 import keras_rs
 
 
-def _clone_initializer(initializer: keras.initializers.Initializer, seed):
+def _clone_initializer(
+    initializer: keras.initializers.Initializer,
+    seed: int | keras.random.SeedGenerator,
+):
+    """Clones the provided initializer with a new seed.
+
+    This function creates a new instance of a Keras initializer from an
+    existing one, but with a different seed. This is useful for ensuring
+    different weights in a model are initialized with different seeds.
+
+    Args:
+        initializer: a keras.initializers.Initializer instance. The initializer
+            to be cloned.
+        seed: int, or a keras.random.SeedGenerator() instance. The random seed.
+
+    Returns:
+        A new `keras.initializers.Initializer` instance configured with the
+        provided seed.
+    """
     config = initializer.get_config()
     config.pop("seed")
     config = {**config, "seed": seed}
@@ -17,17 +37,54 @@ def _clone_initializer(initializer: keras.initializers.Initializer, seed):
 class DLRMDCNV2(keras.Model):
     def __init__(
         self,
-        sparse_feature_configs,
-        embedding_dim,
-        bottom_mlp_dims,
-        top_mlp_dims,
-        num_dcn_layers,
-        dcn_projection_dim,
-        seed=None,
-        dtype=None,
-        name=None,
-        **kwargs,
+        sparse_feature_configs: dict[str, keras_rs.layers.FeatureConfig],
+        bottom_mlp_dims: list[int],
+        top_mlp_dims: list[int],
+        num_dcn_layers: int,
+        dcn_projection_dim: int,
+        seed: int | keras.random.SeedGenerator | None = None,
+        dtype: str | None = None,
+        name: str | None = None,
+        **kwargs: Any,
     ):
+        """DLRM-DCNv2 model.
+
+        The model processes two types of input features:
+        1. Dense Features: Continuous-valued features that are processed by
+           a multi-layer perceptron (the "bottom MLP").
+        2. Sparse Features: High-cardinality categorical features that are
+           first mapped into low-dimensional embedding vectors using the
+           `keras_rs.layers.DistributedEmbedding` layer. This layer is highly
+           optimized for large-scale recommendation models, especially on TPUs
+           with SparseCore, as it can shard large embedding tables across
+           multiple accelerator chips for improved performance. On other
+           hardware (GPUs, CPUs), it functions like a standard embedding layer.
+
+        The output of the bottom MLP and the embedding vectors are then
+        concatenated and fed into a DCN block for learning feature interactions.
+        The output of the DCN block is then processed by another MLP
+        (the "top MLP") to produce a final prediction.
+
+        Args:
+            sparse_feature_configs: A dictionary with features names as keys and
+                `keras_rs.layers.FeatureConfig` objects as values. These configs
+                link features to their corresponding embedding tables
+                (`keras_rs.layers.TableConfig`), specifying parameters like
+                vocabulary size, embedding dimension, and hardware placement
+                strategy.
+            bottom_mlp_dims: A list of integers specifying the number of units
+                in each layer of the bottom MLP.
+            top_mlp_dims: A list of integers specifying the number of units in
+                each layer of the top MLP. The last value is the final output
+                dimension (e.g., 1 for binary classification).
+            num_dcn_layers: The number of feature-crossing layers in the DCNv2
+                block.
+            dcn_projection_dim: The projection dimension used within each DCNv2
+                cross-layer.
+            seed: The random seed.
+            dtype: Optional dtype.
+            name: The name of the layer.
+        """
         super().__init__(dtype=dtype, name=name, **kwargs)
         self.seed = seed
 
@@ -68,13 +125,18 @@ class DLRMDCNV2(keras.Model):
 
         # === Passed attributes ===
         self.sparse_feature_configs = sparse_feature_configs
-        self.embedding_dim = embedding_dim
         self.bottom_mlp_dims = bottom_mlp_dims
         self.top_mlp_dims = top_mlp_dims
         self.num_dcn_layers = num_dcn_layers
         self.dcn_projection_dim = dcn_projection_dim
 
-    def call(self, inputs):
+    def call(self, inputs: dict[str, ops.Tensor]) -> ops.Tensor:
+        """Forward pass of the model.
+
+        Args:
+            inputs: A dictionary containing `"dense_features"` and
+            `"preprocessed_sparse_features"` as keys.
+        """
         # Inputs
         dense_features = inputs["dense_features"]
         sparse_features = inputs["preprocessed_sparse_features"]
@@ -96,11 +158,22 @@ class DLRMDCNV2(keras.Model):
 
     def _get_mlp_layers(
         self,
-        dims,
-        intermediate_activation,
-        final_activation,
-    ):
-        # Layers.
+        dims: list[int],
+        intermediate_activation: str | keras.layers.Activation,
+        final_activation: str | keras.layers.Activation,
+    ) -> list[keras.layers.Layer]:
+        """Creates a list of Dense layers.
+
+        Args:
+            dims: list. Output dimensions of the dense layers to be created.
+            intermediate_activation: string or `keras.layers.Activation`. The
+                activation to be used in all layers, save the last.
+            final_activation: str or `keras.layers.Activation`. The activation
+                to be used in the last layer.
+
+        Returns:
+            A list of `keras.layers.Dense` layers.
+        """
         initializer = keras.initializers.VarianceScaling(
             scale=1.0,
             mode="fan_in",
@@ -138,6 +211,7 @@ class DLRMDCNV2(keras.Model):
         return layers
 
     def get_config(self):
+        """Returns the config of the model."""
         config = super().get_config()
         config.update(
             {
@@ -153,7 +227,30 @@ class DLRMDCNV2(keras.Model):
 
 
 class DCNBlock(keras.layers.Layer):
-    def __init__(self, num_layers, projection_dim, seed, dtype, name, **kwargs):
+    def __init__(
+        self,
+        num_layers: int,
+        projection_dim: int,
+        seed: int | keras.random.SeedGenerator,
+        dtype: str | None = None,
+        name: str | None = None,
+        **kwargs,
+    ):
+        """
+        A block of Deep & Cross Network V2 (DCNv2) layers.
+
+        This layer implements the "cross network" part of the DCNv2 architecture
+        by stacking multiple `keras_rs.layers.FeatureCross` layers, which learn
+        feature interactions.
+
+        Args:
+            num_layers: The number of `FeatureCross` layers to stack.
+            projection_dim: The dimensionality of the low-rank projection used
+                within each cross layer.
+            seed: The random seed for initializers.
+            dtype: Optional dtype.
+            name: The name of the layer.
+        """
         super().__init__(dtype=dtype, name=name, **kwargs)
 
         # Layers
