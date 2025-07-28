@@ -5,6 +5,7 @@ from keras import ops
 
 import keras_rs
 
+Tensor: TypeAlias = Any
 
 def _clone_initializer(
     initializer: keras.initializers.Initializer,
@@ -130,7 +131,7 @@ class DLRMDCNV2(keras.Model):
         self.num_dcn_layers = num_dcn_layers
         self.dcn_projection_dim = dcn_projection_dim
 
-    def call(self, inputs: dict[str, ops.Tensor]) -> ops.Tensor:
+    def call(self, inputs: dict[str, Tensor]) -> Tensor:
         """Forward pass of the model.
 
         Args:
