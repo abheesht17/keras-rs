@@ -678,6 +678,7 @@ class DistributedEmbedding(keras.layers.Layer):
         flat_inputs = keras.tree.flatten(inputs)
         # Rearrange to match order of self._placement_to_path_to_feature_config.
         flat_inputs = [flat_inputs[i] for i in self._input_idx]
+        print("flat inputs --->", flat_inputs)
         # Go from flat to nested dict placement -> path -> input.
         placement_to_path_to_inputs = keras.tree.pack_sequence_as(
             self._placement_to_path_to_feature_config, flat_inputs
