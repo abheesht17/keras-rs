@@ -121,6 +121,9 @@ def main(
         batch_size=global_batch_size,
         sparse_features=sparse_features,
     )
+    for ele in train_ds:
+        print("orig --->", ele[0])
+        break
     # For the multi-host case, the dataset has to be distributed manually.
     # See note here:
     # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
