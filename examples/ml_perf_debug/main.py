@@ -88,7 +88,7 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(global_batch_size, 1),
+            input_shape=(global_batch_size, multi_hot_size),
             output_shape=(global_batch_size, embedding_dim),
         )
 
