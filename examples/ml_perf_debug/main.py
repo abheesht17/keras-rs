@@ -7,6 +7,7 @@ import argparse
 import os
 
 import jax
+jax.config.update("jax_debug_nans", True)
 import yaml
 
 os.environ["KERAS_BACKEND"] = "jax"
@@ -79,7 +80,7 @@ def main(
                 "default_device"
                 if vocabulary_size < embedding_threshold
                 else "sparsecore"
-            # ),  # normal embeddings when vocabulary_size < embedding_threshold
+            ),  # normal embeddings when vocabulary_size < embedding_threshold
             # TODO: These two args are not getting passed down to
             # `jax-tpu-embedding` properly, seems like.
             max_ids_per_partition=max_ids_per_partition,
