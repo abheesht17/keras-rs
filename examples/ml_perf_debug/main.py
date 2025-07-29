@@ -7,6 +7,7 @@ import argparse
 import os
 
 import jax
+jax.config.update("jax_disable_jit", True)
 jax.config.update("jax_debug_nans", True)
 import yaml
 
