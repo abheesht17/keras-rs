@@ -7,7 +7,6 @@ import argparse
 import os
 
 import jax
-jax.config.update("jax_debug_nans", True)
 import yaml
 
 os.environ["KERAS_BACKEND"] = "jax"
@@ -144,12 +143,12 @@ def main(
             )
 
     train_generator = generator(train_ds, training=True)
-    # for first_batch in train_generator:
-    #     model(first_batch[0])
-    #     break
+    for first_batch in train_generator:
+        model(first_batch[0])
+        break
 
     # Train the model.
-    model.fit(train_generator, epochs=1)
+    # model.fit(train_generator, epochs=1)
 
 
 if __name__ == "__main__":
