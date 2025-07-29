@@ -155,7 +155,7 @@ class DLRMDCNV2(keras.Model):
         """
         # Inputs
         dense_input = inputs["dense_input"]
-        large_emb_inputs = inputs["preprocessed_large_emb_inputs"]
+        large_emb_inputs = inputs["large_emb_inputs"]
 
         # Embed features.
         dense_output = self.bottom_mlp(dense_input)
@@ -164,7 +164,7 @@ class DLRMDCNV2(keras.Model):
         if self.small_emb_features:
             small_emb_inputs = inputs["small_emb_inputs"]
             for small_emb_input, embedding_layer in zip(
-                small_emb_inputs, self.small_embedding_layers
+                small_emb_inputs.values(), self.small_embedding_layers
             ):
                 embedding = embedding_layer(small_emb_input)
                 embedding = ops.sum(embedding, axis=-2)

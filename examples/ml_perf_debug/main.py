@@ -132,7 +132,7 @@ def main(
             yield (
                 {
                     "dense_input": example["dense_input"],
-                    "preprocessed_large_emb_inputs": (
+                    "large_emb_inputs": (
                         model.embedding_layer.preprocess(
                             example["large_emb_inputs"], training=training
                         )
