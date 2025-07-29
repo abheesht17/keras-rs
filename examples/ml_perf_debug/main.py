@@ -54,6 +54,7 @@ def main(
             .replace("egorical_feature", "")
         )
         vocabulary_size = sparse_feature["vocabulary_size"]
+        multi_hot_size = sparse_feature["multi_hot_size"]
 
         # For features which have vocabulary_size < embedding_threshold, we can
         # just do a normal dense lookup for those instead of have distributed
