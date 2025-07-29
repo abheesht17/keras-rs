@@ -776,6 +776,7 @@ class DistributedEmbedding(keras.layers.Layer):
                     training=training,
                 )
             )
+            jax.debug.print("inside dist emb default ----> {}", placement_to_path_to_outputs["default_device"])
 
         # Verify output structure.
         keras.tree.assert_same_structure(
