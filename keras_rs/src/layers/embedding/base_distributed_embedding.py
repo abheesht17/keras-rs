@@ -659,13 +659,13 @@ class DistributedEmbedding(keras.layers.Layer):
         # Go from deeply nested structure of inputs to flat inputs.
         print("inputs--->", inputs)
         flat_inputs = keras.tree.flatten(inputs)
-        print("flat inputs--->", flat_inputs)
+        # print("flat inputs--->", flat_inputs)
 
         # Go from flat to nested dict placement -> path -> input.
         placement_to_path_to_inputs = keras.tree.pack_sequence_as(
             self._placement_to_path_to_feature_config, flat_inputs
         )
-        print("--->cfg", self._placement_to_path_to_feature_config)
+        # print("--->cfg", self._placement_to_path_to_feature_config)
         print("---> ppi", placement_to_path_to_inputs)
 
         if weights is not None:
