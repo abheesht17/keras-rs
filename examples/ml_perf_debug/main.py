@@ -113,7 +113,6 @@ def main(
         loss=keras.losses.BinaryCrossentropy(),
         optimizer=keras.optimizers.Adagrad(learning_rate=learning_rate),
         metrics=[keras.metrics.BinaryAccuracy()],
-        jit_compile=False
     )
 
     # === Load dataset ===
