@@ -623,7 +623,7 @@ class DistributedEmbedding(keras.layers.Layer):
         flat_inputs = keras.tree.flatten_with_path(inputs)
         print("--->fi", flat_inputs)
         flat_inputs = {
-            k[0][-1]: v for k, v in flat_inputs.items()
+            k[0][-1]: v for (k, v) in flat_inputs
         }
         print("---->", flat_inputs.keys())
 
