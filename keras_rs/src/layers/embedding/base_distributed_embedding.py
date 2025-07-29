@@ -666,7 +666,7 @@ class DistributedEmbedding(keras.layers.Layer):
             self._placement_to_path_to_feature_config, flat_inputs
         )
         # print("--->cfg", self._placement_to_path_to_feature_config)
-        print("---> ppi", placement_to_path_to_inputs)
+        # print("---> ppi", placement_to_path_to_inputs)
 
         if weights is not None:
             # Same for weights if present.
