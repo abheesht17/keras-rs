@@ -3,8 +3,6 @@ import importlib.util
 import typing
 from typing import Any, Sequence
 
-import jax
-
 import keras
 import numpy as np
 from keras.src import backend
@@ -580,22 +578,6 @@ class DistributedEmbedding(keras.layers.Layer):
             )
         )
 
-        self._input_idx: list[int] = []
-        placement_curr_idx = {}
-        prev_placement_idx = 0
-        for placement in self._placement_to_path_to_feature_config.keys():
-            placement_curr_idx[placement] = prev_placement_idx
-            prev_placement_idx += len(
-                self._placement_to_path_to_feature_config[placement]
-            )
-        for placement_and_path in placement_and_paths:
-            placement = placement_and_path.placement
-            self._input_idx.append(placement_curr_idx[placement])
-            placement_curr_idx[placement] += 1
-        self._input_idx = sorted(
-            range(len(self._input_idx)), key=self._input_idx.__getitem__
-        )
-
     def build(self, input_shapes: types.Nested[types.Shape]) -> None:
         if self.built:
             return
@@ -634,7 +616,6 @@ class DistributedEmbedding(keras.layers.Layer):
             )
 
         super().build(input_shapes)
-        
 
     def preprocess(
         self,
@@ -673,24 +654,18 @@ class DistributedEmbedding(keras.layers.Layer):
             )
             self.build(input_shapes)
 
-        print("--->input_idx", self._input_idx)
         # Go from deeply nested structure of inputs to flat inputs.
         flat_inputs = keras.tree.flatten(inputs)
-        # Rearrange to match order of self._placement_to_path_to_feature_config.
-        flat_inputs = [flat_inputs[i] for i in self._input_idx]
-        print("flat inputs --->", flat_inputs)
+
         # Go from flat to nested dict placement -> path -> input.
         placement_to_path_to_inputs = keras.tree.pack_sequence_as(
             self._placement_to_path_to_feature_config, flat_inputs
         )
-        print("--->cfg", self._placement_to_path_to_feature_config)
-        # print("---> ppi", placement_to_path_to_inputs)
 
         if weights is not None:
             # Same for weights if present.
             keras.tree.assert_same_structure(self._feature_configs, weights)
             flat_weights = keras.tree.flatten(weights)
-            flat_weights = [flat_weights[i] for i in self._input_idx]
             placement_to_path_to_weights = keras.tree.pack_sequence_as(
                 self._placement_to_path_to_feature_config, flat_weights
             )
@@ -784,24 +759,20 @@ class DistributedEmbedding(keras.layers.Layer):
         # Call for features placed on "sparsecore".
         if "sparsecore" in preprocessed_inputs:
             inputs_and_weights = preprocessed_inputs["sparsecore"]
-            # jax.debug.print("----> sc inputs and weights {}", inputs_and_weights)
             placement_to_path_to_outputs["sparsecore"] = self._sparsecore_call(
                 **inputs_and_weights,
                 training=training,
             )
-            # jax.debug.print("inside dist emb ----> {}", placement_to_path_to_outputs["sparsecore"])
 
         # Call for features placed on "default_device".
         if "default_device" in preprocessed_inputs:
             inputs_and_weights = preprocessed_inputs["default_device"]
-            # jax.debug.print("----> default inputs and weights {}", inputs_and_weights["inputs"]["cat_16_id"])
             placement_to_path_to_outputs["default_device"] = (
                 self._default_device_call(
                     **inputs_and_weights,
                     training=training,
                 )
             )
-            # jax.debug.print("inside dist emb default ----> {}", placement_to_path_to_outputs["default_device"])
 
         # Verify output structure.
         keras.tree.assert_same_structure(
