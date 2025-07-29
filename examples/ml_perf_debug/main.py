@@ -75,7 +75,7 @@ def main(
             ),
             combiner="sum",
             # placement="sparsecore",
-            placement=(
+             placement=(
                 "default_device"
                 if vocabulary_size < embedding_threshold
                 else "sparsecore"

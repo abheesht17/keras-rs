@@ -106,6 +106,8 @@ class DLRMDCNV2(keras.Model):
         # Distributed embeddings for encoding sparse inputs
         self.embedding_layer = keras_rs.layers.DistributedEmbedding(
             feature_configs=sparse_feature_configs,
+            table_stacking=None,
+
             dtype=dtype,
             name="embedding_layer",
         )
