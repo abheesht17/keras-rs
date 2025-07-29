@@ -674,7 +674,7 @@ class DistributedEmbedding(keras.layers.Layer):
             self.build(input_shapes)
 
         # Go from flat to nested dict placement -> path -> input.
-        placement_to_path_to_inputs = _rearrange_inputs(inputs)
+        placement_to_path_to_inputs = self._rearrange_inputs(inputs)
 
         # print("--->cfg", self._placement_to_path_to_feature_config)
         print("---> ppi", placement_to_path_to_inputs)
@@ -682,7 +682,7 @@ class DistributedEmbedding(keras.layers.Layer):
         if weights is not None:
             # Same for weights if present.
             keras.tree.assert_same_structure(self._feature_configs, weights)
-            placement_to_path_to_weights = _rearrange_inputs(weights)
+            placement_to_path_to_weights = self._rearrange_inputs(weights)
         else:
             # Populate keys for weights.
             placement_to_path_to_weights = {
