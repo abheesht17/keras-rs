@@ -1,5 +1,7 @@
 from typing import Any, TypeAlias
 
+import jax
+
 import keras
 from keras import ops
 
@@ -145,7 +147,9 @@ class DLRMDCNV2(keras.Model):
 
         # Embed features.
         dense_output = self.bottom_mlp(dense_features)
+        jax.debug.print("--->dense_output: {}", dense_output)
         sparse_embeddings = self.embedding_layer(sparse_features)
+        jax.debug.print("--->sparse_embeddings: {}", sparse_embeddings)
 
         # Interaction
         x = ops.concatenate(
