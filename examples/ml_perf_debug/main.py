@@ -122,7 +122,7 @@ def main(
         sparse_features=sparse_features,
     )
     for ele in train_ds:
-        print("orig --->", ele["sparse_features"]["cat_16_id"])
+        print("orig --->", ele["sparse_features"]["cat_14_id"])
         break
     # For the multi-host case, the dataset has to be distributed manually.
     # See note here:
