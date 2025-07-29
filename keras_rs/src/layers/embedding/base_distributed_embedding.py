@@ -761,12 +761,12 @@ class DistributedEmbedding(keras.layers.Layer):
         # Call for features placed on "sparsecore".
         if "sparsecore" in preprocessed_inputs:
             inputs_and_weights = preprocessed_inputs["sparsecore"]
-            jax.debug.print("----> sc inputs and weights P{}", inputs_and_weights)
+            jax.debug.print("----> sc inputs and weights {}", inputs_and_weights)
             placement_to_path_to_outputs["sparsecore"] = self._sparsecore_call(
                 **inputs_and_weights,
                 training=training,
             )
-            jax.debug.print("inside dist emb ----> {}", placement_to_path_to_outputs["sparsecore"])
+            # jax.debug.print("inside dist emb ----> {}", placement_to_path_to_outputs["sparsecore"])
 
         # Call for features placed on "default_device".
         if "default_device" in preprocessed_inputs:
@@ -778,7 +778,7 @@ class DistributedEmbedding(keras.layers.Layer):
                     training=training,
                 )
             )
-            jax.debug.print("inside dist emb default ----> {}", placement_to_path_to_outputs["default_device"])
+            # jax.debug.print("inside dist emb default ----> {}", placement_to_path_to_outputs["default_device"])
 
         # Verify output structure.
         keras.tree.assert_same_structure(
