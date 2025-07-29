@@ -74,11 +74,11 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            placement="sparsecore",
-            # placement=(
-            #     "default_device"
-            #     if vocabulary_size < embedding_threshold
-            #     else "sparsecore"
+            # placement="sparsecore",
+            placement=(
+                "default_device"
+                if vocabulary_size < embedding_threshold
+                else "sparsecore"
             # ),  # normal embeddings when vocabulary_size < embedding_threshold
             # TODO: These two args are not getting passed down to
             # `jax-tpu-embedding` properly, seems like.
