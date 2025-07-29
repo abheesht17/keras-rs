@@ -657,7 +657,9 @@ class DistributedEmbedding(keras.layers.Layer):
             self.build(input_shapes)
 
         # Go from deeply nested structure of inputs to flat inputs.
+        print("inputs--->", inputs)
         flat_inputs = keras.tree.flatten(inputs)
+        print("flat inputs--->", flat_inputs)
 
         # Go from flat to nested dict placement -> path -> input.
         placement_to_path_to_inputs = keras.tree.pack_sequence_as(
