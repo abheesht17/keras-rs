@@ -622,7 +622,7 @@ class DistributedEmbedding(keras.layers.Layer):
     def _rearrange_inputs(self, inputs):
         flat_inputs = keras.tree.flatten_with_path(inputs)
         flat_inputs = {
-            k[0][-1]: v for k, v in flat_inputs
+            k[0][-1]: v for k, v in flat_inputs.items()
         }
         print("---->", flat_inputs.keys())
 
