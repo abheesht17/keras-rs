@@ -3,6 +3,8 @@ import importlib.util
 import typing
 from typing import Any, Sequence
 
+import jax
+
 import keras
 import numpy as np
 from keras.src import backend
@@ -763,6 +765,7 @@ class DistributedEmbedding(keras.layers.Layer):
                 **inputs_and_weights,
                 training=training,
             )
+            jax.debug.print("inside dist emb ----> {}", placement_to_path_to_outputs["sparsecore"])
 
         # Call for features placed on "default_device".
         if "default_device" in preprocessed_inputs:
