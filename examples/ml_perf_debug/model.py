@@ -1,7 +1,5 @@
 from typing import Any, TypeAlias
 
-import jax
-
 import keras
 from keras import ops
 
@@ -41,7 +39,9 @@ def _clone_initializer(
 class DLRMDCNV2(keras.Model):
     def __init__(
         self,
-        sparse_feature_configs: dict[str, keras_rs.layers.FeatureConfig],
+        large_emb_feature_configs: dict[str, keras_rs.layers.FeatureConfig],
+        small_emb_features: list,
+        embedding_dim: int,
         bottom_mlp_dims: list[int],
         top_mlp_dims: list[int],
         num_dcn_layers: int,
@@ -70,9 +70,9 @@ class DLRMDCNV2(keras.Model):
         (the "top MLP") to produce a final prediction.
 
         Args:
-            sparse_feature_configs: A dictionary with features names as keys and
-                `keras_rs.layers.FeatureConfig` objects as values. These configs
-                link features to their corresponding embedding tables
+            large_emb_feature_configs: A dictionary with features names as keys
+                and `keras_rs.layers.FeatureConfig` objects as values. These
+                configs link features to their corresponding embedding tables
                 (`keras_rs.layers.TableConfig`), specifying parameters like
                 vocabulary size, embedding dimension, and hardware placement
                 strategy.
@@ -103,13 +103,22 @@ class DLRMDCNV2(keras.Model):
             ),
             name="bottom_mlp",
         )
-        # Distributed embeddings for encoding sparse inputs
+        # Distributed embeddings for large embedding tables
         self.embedding_layer = keras_rs.layers.DistributedEmbedding(
-            feature_configs=sparse_feature_configs,
+            feature_configs=large_emb_feature_configs,
             table_stacking=None,
             dtype=dtype,
             name="embedding_layer",
         )
+        # Embedding layers for small embedding tables
+        self.small_embedding_layers = [
+            keras.layers.Embedding(
+                input_dim=small_emb_feature["vocabulary_size"],
+                output_dim=embedding_dim,
+                name=f"small_embedding_layer_{i}",
+            )
+            for i, small_emb_feature in enumerate(small_emb_features)
+        ]
         # DCN for "interactions"
         self.dcn_block = DCNBlock(
             num_layers=num_dcn_layers,
@@ -129,7 +138,9 @@ class DLRMDCNV2(keras.Model):
         )
 
         # === Passed attributes ===
-        self.sparse_feature_configs = sparse_feature_configs
+        self.large_emb_feature_configs = large_emb_feature_configs
+        self.small_emb_features = small_emb_features
+        self.embedding_dim = embedding_dim
         self.bottom_mlp_dims = bottom_mlp_dims
         self.top_mlp_dims = top_mlp_dims
         self.num_dcn_layers = num_dcn_layers
@@ -140,21 +151,30 @@ class DLRMDCNV2(keras.Model):
 
         Args:
             inputs: A dictionary containing `"dense_features"` and
-            `"preprocessed_sparse_features"` as keys.
+            `"preprocessed_large_emb_features"` as keys.
         """
         # Inputs
-        dense_features = inputs["dense_features"]
-        sparse_features = inputs["preprocessed_sparse_features"]
+        dense_input = inputs["dense_input"]
+        large_emb_inputs = inputs["preprocessed_large_emb_inputs"]
 
         # Embed features.
-        dense_output = self.bottom_mlp(dense_features)
-        jax.debug.print("--->dense_output: {}", dense_output)
-        sparse_embeddings = self.embedding_layer(sparse_features)
-        jax.debug.print("--->sparse_embeddings: {}", sparse_embeddings)
+        dense_output = self.bottom_mlp(dense_input)
+        large_embeddings = self.embedding_layer(large_emb_inputs)
+        small_embeddings = []
+        if self.small_emb_features:
+            small_emb_inputs = inputs["small_emb_inputs"]
+            for small_emb_input, embedding_layer in zip(
+                small_emb_inputs, self.small_embedding_layers
+            ):
+                embedding = embedding_layer(small_emb_input)
+                embedding = ops.sum(embedding, axis=-2)
+                small_embeddings.append(embedding)
+
+            small_embeddings = ops.concatenate(small_embeddings, axis=-1)
 
         # Interaction
         x = ops.concatenate(
-            [dense_output, *sparse_embeddings.values()],
+            [dense_output, *small_embeddings, *large_embeddings.values()],
             axis=-1,
         )
         x = self.dcn_block(x)
@@ -222,7 +242,9 @@ class DLRMDCNV2(keras.Model):
         config = super().get_config()
         config.update(
             {
-                "sparse_feature_configs": self.sparse_feature_configs,
+                "large_emb_feature_configs": self.large_emb_feature_configs,
+                "small_emb_features": self.small_emb_features,
+                "embedding_dim": self.embedding_dim,
                 "bottom_mlp_dims": self.bottom_mlp_dims,
                 "top_mlp_dims": self.top_mlp_dims,
                 "num_dcn_layers": self.num_dcn_layers,

@@ -24,7 +24,8 @@ SEED = 1337
 def main(
     file_pattern,
     dense_features,
-    sparse_features,
+    large_emb_features,
+    small_emb_features,
     label,
     embedding_dim,
     allow_id_dropping,
@@ -45,20 +46,17 @@ def main(
 
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
-    for sparse_feature in sparse_features:
+    for large_emb_feature in large_emb_features:
         # Rename these features to something shorter; was facing some weird
         # issues with the longer names.
         feature_name = (
-            sparse_feature["name"]
+            large_emb_feature["name"]
             .replace("-", "_")
             .replace("egorical_feature", "")
         )
-        vocabulary_size = sparse_feature["vocabulary_size"]
-        multi_hot_size = sparse_feature["multi_hot_size"]
+        vocabulary_size = large_emb_feature["vocabulary_size"]
+        multi_hot_size = large_emb_feature["multi_hot_size"]
 
-        # For features which have vocabulary_size < embedding_threshold, we can
-        # just do a normal dense lookup for those instead of have distributed
-        # embeddings.
         table_config = keras_rs.layers.TableConfig(
             name=f"{feature_name}_table",
             vocabulary_size=vocabulary_size,
@@ -74,12 +72,7 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            # placement="sparsecore",
-             placement=(
-                "default_device"
-                if vocabulary_size < embedding_threshold
-                else "sparsecore"
-            ),  # normal embeddings when vocabulary_size < embedding_threshold
+            placement="sparsecore",
             # TODO: These two args are not getting passed down to
             # `jax-tpu-embedding` properly, seems like.
             max_ids_per_partition=max_ids_per_partition,
@@ -100,7 +93,9 @@ def main(
     # class.
     print("===== Initialising model =====")
     model = DLRMDCNV2(
-        sparse_feature_configs=feature_configs,
+        large_emb_feature_configs=feature_configs,
+        small_emb_features=small_emb_features,
+        embedding_dim=embedding_dim,
         bottom_mlp_dims=bottom_mlp_dims,
         top_mlp_dims=top_mlp_dims,
         num_dcn_layers=num_dcn_layers,
@@ -119,11 +114,9 @@ def main(
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
         batch_size=global_batch_size,
-        sparse_features=sparse_features,
+        large_emb_features=large_emb_features,
+        small_emb_features=small_emb_features,
     )
-    for ele in train_ds:
-        print("orig --->", ele["sparse_features"]["cat_14_id"])
-        break
     # For the multi-host case, the dataset has to be distributed manually.
     # See note here:
     # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
@@ -138,10 +131,13 @@ def main(
         for example in dataset:
             yield (
                 {
-                    "dense_features": example["dense_features"],
-                    "preprocessed_sparse_features": model.embedding_layer.preprocess(
-                        example["sparse_features"], training=training
+                    "dense_input": example["dense_input"],
+                    "preprocessed_large_emb_inputs": (
+                        model.embedding_layer.preprocess(
+                            example["large_emb_inputs"], training=training
+                        )
                     ),
+                    "small_emb_inputs": example["small_emb_inputs"],
                 },
                 example["clicked"],
             )
@@ -181,7 +177,7 @@ if __name__ == "__main__":
     # Features
     label = ds_cfg["label"]
     dense_features = ds_cfg["dense"]
-    sparse_features = ds_cfg["sparse"]
+    emb_features = ds_cfg["sparse"]
 
     # == Model config ==
     model_cfg = config["model"]
@@ -205,10 +201,24 @@ if __name__ == "__main__":
     global_batch_size = training_cfg["global_batch_size"]
     num_epochs = training_cfg["num_epochs"]
 
+    # For features which have vocabulary_size < embedding_threshold, we can
+    # just do a normal dense lookup for those instead of have distributed
+    # embeddings. We could ideally pass `placement = default_device` to
+    # `keras_rs.layers.TableConfig` directly (and wouldn't have to do this
+    # separation of features), but doing it that way will necessarily require
+    # a separate optimiser for the embedding layer.
+    small_emb_features = []
+    for emb_feature in emb_features:
+        if emb_feature["vocabulary_size"] < embedding_threshold:
+            small_emb_features.append(emb_feature)
+            emb_features.remove(emb_feature)
+    large_emb_features = emb_features
+
     main(
         file_pattern,
         dense_features,
-        sparse_features,
+        large_emb_features,
+        small_emb_features,
         label,
         embedding_dim,
         allow_id_dropping,
