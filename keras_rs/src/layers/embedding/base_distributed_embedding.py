@@ -624,6 +624,7 @@ class DistributedEmbedding(keras.layers.Layer):
         flat_inputs = {
             k[0][-1]: v for k, v in flat_inputs
         }
+        print("---->", flat_inputs.keys())
 
         placement_to_path_to_inputs = {}
         for placement in self._placement_to_path_to_feature_config.keys():
