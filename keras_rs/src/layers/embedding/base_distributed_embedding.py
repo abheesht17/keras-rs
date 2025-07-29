@@ -618,23 +618,6 @@ class DistributedEmbedding(keras.layers.Layer):
             )
 
         super().build(input_shapes)
-
-    def _rearrange_inputs(self, inputs):
-        flat_inputs = keras.tree.flatten_with_path(inputs)
-        flat_inputs = {
-            k[-1]: v for (k, v) in flat_inputs
-        }
-        print("---->", flat_inputs.keys())
-
-        placement_to_path_to_inputs = {}
-        for placement in self._placement_to_path_to_feature_config.keys():
-            if placement not in placement_to_path_to_inputs:
-                placement_to_path_to_inputs[placement] = {}
-
-            for path in self._placement_to_path_to_feature_config[placement]:
-                placement_to_path_to_inputs[placement][path] = flat_inputs[path]
-
-        return placement_to_path_to_inputs
         
 
     def preprocess(
@@ -674,9 +657,14 @@ class DistributedEmbedding(keras.layers.Layer):
             )
             self.build(input_shapes)
 
+        # Go from deeply nested structure of inputs to flat inputs.
+        flat_inputs = keras.tree.flatten(inputs)
+        # Rearrange to match order of self._placement_to_path_to_feature_config.
+        flat_inputs = [flat_inputs[i] for i in self._input_idx]
         # Go from flat to nested dict placement -> path -> input.
-        placement_to_path_to_inputs = self._rearrange_inputs(inputs)
-
+        placement_to_path_to_inputs = keras.tree.pack_sequence_as(
+            self._placement_to_path_to_feature_config, flat_inputs
+        )
         # print("--->cfg", self._placement_to_path_to_feature_config)
         print("---> ppi", placement_to_path_to_inputs)
 
