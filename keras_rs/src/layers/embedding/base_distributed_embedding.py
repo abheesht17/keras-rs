@@ -619,6 +619,23 @@ class DistributedEmbedding(keras.layers.Layer):
 
         super().build(input_shapes)
 
+    def _rearrange_inputs(self, inputs):
+        flat_inputs = keras.tree.flatten_with_path(inputs)
+        flat_inputs = {
+            k[0][-1]: v for k, v in flat_inputs
+        }
+
+        placement_to_path_to_inputs = {}
+        for placement in self._placement_to_path_to_feature_config.keys():
+            if placement not in placement_to_path_to_inputs:
+                placement_to_path_to_inputs[placement] = {}
+
+            for path in self._placement_to_path_to_feature_config[placement]:
+                placement_to_path_to_inputs[placement][path] = flat_inputs[path]
+
+        return placement_to_path_to_inputs
+        
+
     def preprocess(
         self,
         inputs: types.Nested[types.Tensor],
@@ -656,25 +673,16 @@ class DistributedEmbedding(keras.layers.Layer):
             )
             self.build(input_shapes)
 
-        # Go from deeply nested structure of inputs to flat inputs.
-        # print("inputs--->", inputs)
-        flat_inputs = keras.tree.flatten(inputs)
-        print("flat inputs--->", flat_inputs)
-
         # Go from flat to nested dict placement -> path -> input.
-        placement_to_path_to_inputs = keras.tree.pack_sequence_as(
-            self._placement_to_path_to_feature_config, flat_inputs
-        )
+        placement_to_path_to_inputs = _rearrange_inputs(inputs)
+
         # print("--->cfg", self._placement_to_path_to_feature_config)
-        # print("---> ppi", placement_to_path_to_inputs)
+        print("---> ppi", placement_to_path_to_inputs)
 
         if weights is not None:
             # Same for weights if present.
             keras.tree.assert_same_structure(self._feature_configs, weights)
-            flat_weights = keras.tree.flatten(weights)
-            placement_to_path_to_weights = keras.tree.pack_sequence_as(
-                self._placement_to_path_to_feature_config, flat_weights
-            )
+            placement_to_path_to_weights = _rearrange_inputs(weights)
         else:
             # Populate keys for weights.
             placement_to_path_to_weights = {
