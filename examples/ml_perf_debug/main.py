@@ -44,7 +44,7 @@ def main(
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
-    per_host_batch_size = global_batch_size // jax.process_count()
+    # per_host_batch_size = global_batch_size // jax.process_count()
 
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
@@ -85,7 +85,7 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(global_batch_size, 1),
+            input_shape=(global_batch_size, multi_hot_size),
             output_shape=(global_batch_size, embedding_dim),
         )
 
@@ -115,7 +115,7 @@ def main(
     # === Load dataset ===
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
-        batch_size=per_host_batch_size,
+        batch_size=global_batch_size,
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
@@ -134,18 +134,18 @@ def main(
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
-        for example in dataset:
+        for features, labels in dataset:
             yield (
                 {
-                    "dense_input": example["dense_input"],
+                    "dense_input": features["dense_input"],
                     "large_emb_inputs": (
                         model.embedding_layer.preprocess(
-                            example["large_emb_inputs"], training=training
+                            features["large_emb_inputs"], training=training
                         )
                     ),
-                    "small_emb_inputs": example["small_emb_inputs"],
+                    "small_emb_inputs": features["small_emb_inputs"],
                 },
-                example["clicked"],
+                labels,
             )
 
     train_generator = generator(train_ds, training=True)
