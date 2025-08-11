@@ -44,7 +44,7 @@ def main(
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
-    # per_host_batch_size = global_batch_size // jax.process_count()
+    per_host_batch_size = global_batch_size // jax.process_count()
 
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
@@ -115,7 +115,7 @@ def main(
     # === Load dataset ===
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
-        batch_size=global_batch_size,
+        batch_size=per_host_batch_size,
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
@@ -130,28 +130,28 @@ def main(
         print("--->", ele["large_emb_inputs"]["cat_14_id"].shape)
         break
 
-    # def generator(dataset, training=False):
-    #     """Converts tf.data Dataset to a Python generator and preprocesses
-    #     sparse features.
-    #     """
-    #     for example in dataset:
-    #         yield (
-    #             {
-    #                 "dense_input": example["dense_input"],
-    #                 "large_emb_inputs": (
-    #                     model.embedding_layer.preprocess(
-    #                         example["large_emb_inputs"], training=training
-    #                     )
-    #                 ),
-    #                 "small_emb_inputs": example["small_emb_inputs"],
-    #             },
-    #             example["clicked"],
-    #         )
+    def generator(dataset, training=False):
+        """Converts tf.data Dataset to a Python generator and preprocesses
+        sparse features.
+        """
+        for example in dataset:
+            yield (
+                {
+                    "dense_input": example["dense_input"],
+                    "large_emb_inputs": (
+                        model.embedding_layer.preprocess(
+                            example["large_emb_inputs"], training=training
+                        )
+                    ),
+                    "small_emb_inputs": example["small_emb_inputs"],
+                },
+                example["clicked"],
+            )
 
-    # train_generator = generator(train_ds, training=True)
-    # for first_batch in train_generator:
-    #     print("--->", model(first_batch[0]))
-    #     break
+    train_generator = generator(train_ds, training=True)
+    for first_batch in train_generator:
+        print("--->", model(first_batch[0]))
+        break
 
     # Train the model.
     # model.fit(train_generator, epochs=1)
