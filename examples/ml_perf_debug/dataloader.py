@@ -65,7 +65,7 @@ def create_dummy_dataset(batch_size, large_emb_features, small_emb_features):
     labels = dummy_data.pop("clicked")
     features = dummy_data
 
-    dataset = tf.data.Dataset.from_tensors((features, labels)).repeat(16)
+    dataset = tf.data.Dataset.from_tensors((features, labels)).repeat(512)
     return dataset
 
 
