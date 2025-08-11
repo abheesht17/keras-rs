@@ -126,28 +126,32 @@ def main(
         train_ds = distribution.distribute_dataset(train_ds)
         distribution.auto_shard_dataset = False
 
-    def generator(dataset, training=False):
-        """Converts tf.data Dataset to a Python generator and preprocesses
-        sparse features.
-        """
-        for example in dataset:
-            yield (
-                {
-                    "dense_input": example["dense_input"],
-                    "large_emb_inputs": (
-                        model.embedding_layer.preprocess(
-                            example["large_emb_inputs"], training=training
-                        )
-                    ),
-                    "small_emb_inputs": example["small_emb_inputs"],
-                },
-                example["clicked"],
-            )
-
-    train_generator = generator(train_ds, training=True)
-    for first_batch in train_generator:
-        print("--->", model(first_batch[0]))
+    for ele in train_ds:
+        print("--->", ele["large_emb_inputs"]["cat_14_id"].shape)
         break
+
+    # def generator(dataset, training=False):
+    #     """Converts tf.data Dataset to a Python generator and preprocesses
+    #     sparse features.
+    #     """
+    #     for example in dataset:
+    #         yield (
+    #             {
+    #                 "dense_input": example["dense_input"],
+    #                 "large_emb_inputs": (
+    #                     model.embedding_layer.preprocess(
+    #                         example["large_emb_inputs"], training=training
+    #                     )
+    #                 ),
+    #                 "small_emb_inputs": example["small_emb_inputs"],
+    #             },
+    #             example["clicked"],
+    #         )
+
+    # train_generator = generator(train_ds, training=True)
+    # for first_batch in train_generator:
+    #     print("--->", model(first_batch[0]))
+    #     break
 
     # Train the model.
     # model.fit(train_generator, epochs=1)
