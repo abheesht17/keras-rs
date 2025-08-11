@@ -174,7 +174,7 @@ class DLRMDCNV2(keras.Model):
 
         # Interaction
         x = ops.concatenate(
-            [dense_output, *small_embeddings, *large_embeddings.values()],
+            [dense_output, small_embeddings, *large_embeddings.values()],
             axis=-1,
         )
         x = self.dcn_block(x)
