@@ -44,6 +44,8 @@ def main(
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
+    global_batch_size = global_batch_size // jax.process_count()
+
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
     for large_emb_feature in large_emb_features:
@@ -83,8 +85,8 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(global_batch_size*4, multi_hot_size),
-            output_shape=(global_batch_size*4, embedding_dim),
+            input_shape=(global_batch_size, multi_hot_size),
+            output_shape=(global_batch_size, embedding_dim),
         )
 
     # === Instantiate model ===
