@@ -127,7 +127,7 @@ def main(
         distribution.auto_shard_dataset = False
 
     for ele in train_ds:
-        print("--->", ele["large_emb_inputs"]["cat_14_id"].shape)
+        print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
         break
 
     def generator(dataset, training=False):
