@@ -44,7 +44,7 @@ def main(
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
-    # per_host_batch_size = global_batch_size // jax.process_count()
+    per_host_batch_size = global_batch_size // jax.process_count()
 
     # === Distributed embeddings' configs for sparse features ===
     feature_configs = {}
@@ -85,8 +85,8 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(global_batch_size, multi_hot_size),
-            output_shape=(global_batch_size, embedding_dim),
+            input_shape=(per_host_batch_size, multi_hot_size),
+            output_shape=(per_host_batch_size, embedding_dim),
         )
 
     # === Instantiate model ===
@@ -115,7 +115,7 @@ def main(
     # === Load dataset ===
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
-        batch_size=global_batch_size,
+        batch_size=per_host_batch_size,
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
