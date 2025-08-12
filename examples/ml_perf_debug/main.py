@@ -138,25 +138,25 @@ def main(
         print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
         break
 
-    # make_global_view = lambda x: jax.tree.map(
-    #     lambda y: jax.make_array_from_process_local_data(global_sharding, y),
-    #     x,
-    # )
+    make_global_view = lambda x: jax.tree.map(
+        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+        x,
+    )
 
     def generator(dataset, training=False):
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
         for features, labels in dataset:
-            # large_emb_inputs = features["large_emb_inputs"]
-            # for k, v in large_emb_inputs.items():
-            #     large_emb_inputs[k] = v.numpy()
+            large_emb_inputs = features["large_emb_inputs"]
+            for k, v in large_emb_inputs.items():
+                large_emb_inputs[k] = v.numpy()
 
-            # small_emb_inputs = features["small_emb_inputs"]
-            # for k, v in small_emb_inputs.items():
-            #     small_emb_inputs[k] = v.numpy()  
+            small_emb_inputs = features["small_emb_inputs"]
+            for k, v in small_emb_inputs.items():
+                small_emb_inputs[k] = v.numpy()  
 
-            x = {
+            x = make_global_view({
                     "dense_input": features["dense_input"],
                     "large_emb_inputs": (
                         model.embedding_layer.preprocess(
@@ -164,8 +164,8 @@ def main(
                         )
                     ),
                     "small_emb_inputs": features["small_emb_inputs"],
-                }
-            y = labels
+                })
+            y = make_global_view(labels)
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
