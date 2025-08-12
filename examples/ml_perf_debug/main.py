@@ -72,12 +72,13 @@ def main(
             vocabulary_size=vocabulary_size,
             embedding_dim=embedding_dim,
             # TODO(abheesht): Verify.
-            initializer=keras.initializers.VarianceScaling(
-                scale=1.0,
-                mode="fan_in",
-                distribution="uniform",
-                seed=SEED,
-            ),
+            initializer="zeros",
+            # keras.initializers.VarianceScaling(
+            #     scale=1.0,
+            #     mode="fan_in",
+            #     distribution="uniform",
+            #     seed=SEED,
+            # ),
             optimizer=keras.optimizers.Adagrad(
                 learning_rate=embedding_learning_rate
             ),

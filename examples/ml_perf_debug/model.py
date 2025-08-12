@@ -201,23 +201,25 @@ class DLRMDCNV2(keras.Model):
         Returns:
             A list of `keras.layers.Dense` layers.
         """
-        initializer = keras.initializers.VarianceScaling(
-            scale=1.0,
-            mode="fan_in",
-            distribution="uniform",
-            seed=self.seed,
-        )
+        # initializer = keras.initializers.VarianceScaling(
+        #     scale=1.0,
+        #     mode="fan_in",
+        #     distribution="uniform",
+        #     seed=self.seed,
+        # )
 
         layers = [
             keras.layers.Dense(
                 units=dim,
                 activation=intermediate_activation,
-                kernel_initializer=_clone_initializer(
-                    initializer, seed=self.seed
-                ),
-                bias_initializer=_clone_initializer(
-                    initializer, seed=self.seed
-                ),
+                kernel_initializer="zeros",
+                # _clone_initializer(
+                #     initializer, seed=self.seed
+                # ),
+                bias_initializer="zeros",
+                # _clone_initializer(
+                #     initializer, seed=self.seed
+                # ),
                 dtype=self.dtype,
             )
             for dim in dims[:-1]
@@ -286,7 +288,8 @@ class DCNBlock(keras.layers.Layer):
         self.layers = [
             keras_rs.layers.FeatureCross(
                 projection_dim=projection_dim,
-                kernel_initializer=keras.initializers.GlorotUniform(seed=seed),
+                kernel_initializer="zeros",
+                # keras.initializers.GlorotUniform(seed=seed),
                 bias_initializer="zeros",
                 dtype=dtype,
             )
