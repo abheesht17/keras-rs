@@ -164,14 +164,14 @@ def main(
                 features["large_emb_inputs"], training=training
             )
             x = {
-                "dense_input": jnp.array(features["dense_input"]),
+                "dense_input": features["dense_input"],
                 "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
-                "small_emb_inputs": jnp.array(features["small_emb_inputs"]),
+                "small_emb_inputs": features["small_emb_inputs"],
             }
 
             # x = make_global_view(x)
             # y = make_global_view(labels.numpy())
-            y = jnp.array(labels.numpy())
+            y = labels.numpy()
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
