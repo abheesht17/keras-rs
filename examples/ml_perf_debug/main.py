@@ -173,14 +173,14 @@ def main(
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
-    for first_batch in train_generator:
-        print(first_batch[0]["small_emb_inputs"])
-        break
-    # print("DATASET LOADED")
     # for first_batch in train_generator:
-    #     print("BRUH")
-    #     print("--->", model(first_batch[0]))
+    #     print(first_batch[0]["small_emb_inputs"])
     #     break
+    print("DATASET LOADED")
+    for first_batch in train_generator:
+        print("BRUH")
+        print("--->", model(first_batch[0]))
+        break
 
     # Train the model.
     # model.fit(train_generator, epochs=1)
