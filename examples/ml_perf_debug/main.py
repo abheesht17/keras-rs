@@ -176,7 +176,9 @@ def main(
     # for first_batch in train_generator:
     #     print(first_batch)
     #     break
+    print("DATASET LOADED")
     for first_batch in train_generator:
+        print("BRUH")
         print("--->", model(first_batch[0]))
         break
 
