@@ -237,12 +237,15 @@ if __name__ == "__main__":
     # `keras_rs.layers.TableConfig` directly (and wouldn't have to do this
     # separation of features), but doing it that way will necessarily require
     # a separate optimiser for the embedding layer.
-    small_emb_features = []
-    for emb_feature in emb_features:
-        if emb_feature["vocabulary_size"] < embedding_threshold:
-            small_emb_features.append(emb_feature)
-            emb_features.remove(emb_feature)
-    large_emb_features = emb_features
+    small_emb_features = [
+        feature for feature in emb_features 
+        if feature["vocabulary_size"] < embedding_threshold
+    ]
+
+    large_emb_features = [
+        feature for feature in emb_features 
+        if feature["vocabulary_size"] >= embedding_threshold
+    ]
 
     print(f"{small_emb_features=}")
     print(f"{large_emb_features=}")
