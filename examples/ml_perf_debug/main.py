@@ -8,6 +8,7 @@ import os
 
 import jax
 import yaml
+from jax.sharding import PartitionSpec as P
 
 os.environ["KERAS_BACKEND"] = "jax"
 
@@ -43,6 +44,11 @@ def main(
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
+
+    pd = P("x")
+    global_devices = jax.devices()
+    mesh = jax.sharding.Mesh(global_devices, "x")
+    global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     per_host_batch_size = global_batch_size // jax.process_count()
 
@@ -130,12 +136,17 @@ def main(
         print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
         break
 
+    make_global_view = lambda x: jax.tree.map(
+        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+        x,
+    )
+
     def generator(dataset, training=False):
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
         for features, labels in dataset:
-            yield (
+            x = make_global_view(
                 {
                     "dense_input": features["dense_input"],
                     "large_emb_inputs": (
@@ -144,9 +155,10 @@ def main(
                         )
                     ),
                     "small_emb_inputs": features["small_emb_inputs"],
-                },
-                labels,
+                }
             )
+            y = make_global_view(labels)
+            yield (x, y)
 
     train_generator = generator(train_ds, training=True)
     for first_batch in train_generator:
