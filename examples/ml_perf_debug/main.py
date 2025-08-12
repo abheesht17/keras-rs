@@ -151,6 +151,8 @@ def main(
             for k, v in large_emb_inputs.items():
                 large_emb_inputs[k] = v.numpy()
 
+            print(features["small_emb_inputs"])
+
             x = make_global_view(
                 {
                     "dense_input": features["dense_input"].numpy(),
