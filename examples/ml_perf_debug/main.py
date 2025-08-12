@@ -15,6 +15,7 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 
 import keras
+keras.config.disable_traceback_filtering()
 from dataloader import create_dummy_dataset
 from model import DLRMDCNV2
 
