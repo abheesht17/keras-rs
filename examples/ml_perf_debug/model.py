@@ -228,12 +228,14 @@ class DLRMDCNV2(keras.Model):
             keras.layers.Dense(
                 units=dims[-1],
                 activation=final_activation,
-                kernel_initializer=_clone_initializer(
-                    initializer, seed=self.seed
-                ),
-                bias_initializer=_clone_initializer(
-                    initializer, seed=self.seed
-                ),
+                kernel_initializer="zeros",
+                # _clone_initializer(
+                #     initializer, seed=self.seed
+                # ),
+                bias_initializer="zeros",
+                # _clone_initializer(
+                #     initializer, seed=self.seed
+                # ),
                 dtype=self.dtype,
             )
         ]
