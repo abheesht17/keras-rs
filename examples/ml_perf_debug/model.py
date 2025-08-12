@@ -158,7 +158,7 @@ class DLRMDCNV2(keras.Model):
         dense_input = inputs["dense_input"]
         large_emb_inputs = inputs["large_emb_inputs"]
         jax.debug.print("dense_input {}", dense_input.shape)
-        jax.debug.print("large_emb_inputs {}", [v.shape for k:v in large_emb_inputs])
+        jax.debug.print("large_emb_inputs {}", [v.shape for v in large_emb_inputs.values()])
 
         # Embed features.
         dense_output = self.bottom_mlp(dense_input)
