@@ -171,8 +171,11 @@ def main(
 
     train_generator = generator(train_ds, training=True)
     for first_batch in train_generator:
-        print("--->", model(first_batch[0]))
+        print(first_batch)
         break
+    # for first_batch in train_generator:
+    #     print("--->", model(first_batch[0]))
+    #     break
 
     # Train the model.
     # model.fit(train_generator, epochs=1)
