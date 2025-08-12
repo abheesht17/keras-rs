@@ -170,9 +170,9 @@ def main(
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
-    for first_batch in train_generator:
-        print(first_batch)
-        break
+    # for first_batch in train_generator:
+    #     print(first_batch)
+    #     break
     # for first_batch in train_generator:
     #     print("--->", model(first_batch[0]))
     #     break
@@ -243,6 +243,9 @@ if __name__ == "__main__":
             small_emb_features.append(emb_feature)
             emb_features.remove(emb_feature)
     large_emb_features = emb_features
+
+    print(f"{small_emb_features=}")
+    print(f"{large_emb_features=}")
 
     main(
         file_pattern,
