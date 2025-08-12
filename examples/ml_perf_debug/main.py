@@ -124,7 +124,7 @@ def main(
     # === Load dataset ===
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
-        batch_size=per_host_batch_size,
+        batch_size=global_batch_size,
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
