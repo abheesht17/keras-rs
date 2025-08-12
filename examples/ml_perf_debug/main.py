@@ -162,9 +162,9 @@ def main(
                 features["large_emb_inputs"], training=training
             )
             x = {
-                "dense_input": global_features["dense_input"],
+                "dense_input": features["dense_input"],
                 "large_emb_inputs": preprocessed_large_embeddings,
-                "small_emb_inputs": global_features["small_emb_inputs"],
+                "small_emb_inputs": features["small_emb_inputs"],
             }
 
             x = make_global_view(x)
