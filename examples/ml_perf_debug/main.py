@@ -165,13 +165,12 @@ def main(
             )
             x = {
                 "dense_input": features["dense_input"],
-                "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
+                "large_emb_inputs": preprocessed_large_embeddings,
                 "small_emb_inputs": features["small_emb_inputs"],
             }
 
-            # x = make_global_view(x)
-            # y = make_global_view(labels.numpy())
-            y = labels.numpy()
+            x = make_global_view(x)
+            y = make_global_view(labels.numpy())
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
