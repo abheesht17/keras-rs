@@ -137,27 +137,26 @@ def main(
         print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
         break
 
-    make_global_view = lambda x: jax.tree.map(
-        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
-        x,
-    )
+    # make_global_view = lambda x: jax.tree.map(
+    #     lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+    #     x,
+    # )
 
     def generator(dataset, training=False):
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
         for features, labels in dataset:
-            large_emb_inputs = features["large_emb_inputs"]
-            for k, v in large_emb_inputs.items():
-                large_emb_inputs[k] = v.numpy()
+            # large_emb_inputs = features["large_emb_inputs"]
+            # for k, v in large_emb_inputs.items():
+            #     large_emb_inputs[k] = v.numpy()
 
-            small_emb_inputs = features["small_emb_inputs"]
-            for k, v in small_emb_inputs.items():
-                small_emb_inputs[k] = v.numpy()
+            # small_emb_inputs = features["small_emb_inputs"]
+            # for k, v in small_emb_inputs.items():
+            #     small_emb_inputs[k] = v.numpy()  
 
-            x = make_global_view(
-                {
-                    "dense_input": features["dense_input"].numpy(),
+            x = {
+                    "dense_input": features["dense_input"],
                     "large_emb_inputs": (
                         model.embedding_layer.preprocess(
                             features["large_emb_inputs"], training=training
@@ -165,17 +164,16 @@ def main(
                     ),
                     "small_emb_inputs": features["small_emb_inputs"],
                 }
-            )
-            y = make_global_view(labels.numpy())
+            y = labels
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
     # for first_batch in train_generator:
     #     print(first_batch)
     #     break
-    # for first_batch in train_generator:
-    #     print("--->", model(first_batch[0]))
-    #     break
+    for first_batch in train_generator:
+        print("--->", model(first_batch[0]))
+        break
 
     # Train the model.
     # model.fit(train_generator, epochs=1)
@@ -237,15 +235,13 @@ if __name__ == "__main__":
     # `keras_rs.layers.TableConfig` directly (and wouldn't have to do this
     # separation of features), but doing it that way will necessarily require
     # a separate optimiser for the embedding layer.
-    small_emb_features = [
-        feature for feature in emb_features 
-        if feature["vocabulary_size"] < embedding_threshold
-    ]
-
-    large_emb_features = [
-        feature for feature in emb_features 
-        if feature["vocabulary_size"] >= embedding_threshold
-    ]
+    small_emb_features = []
+    large_emb_features = []
+    for emb_feature in emb_features:
+        if emb_feature["vocabulary_size"] < embedding_threshold:
+            small_emb_features.append(emb_feature)
+        else:
+            large_emb_features.append(emb_feature)
 
     print(f"{small_emb_features=}")
     print(f"{large_emb_features=}")
