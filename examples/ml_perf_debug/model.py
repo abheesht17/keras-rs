@@ -157,9 +157,12 @@ class DLRMDCNV2(keras.Model):
         # Inputs
         dense_input = inputs["dense_input"]
         large_emb_inputs = inputs["large_emb_inputs"]
+        jax.debug.print("dense_input {}", dense_input.shape)
+        jax.debug.print("large_emb_inputs {}", [v.shape for k, v in large_emb_inputs])
 
         # Embed features.
         dense_output = self.bottom_mlp(dense_input)
+        jax.debug.print("dense_ouput {}", dense_output.shape)
         large_embeddings = self.embedding_layer(large_emb_inputs)
         small_embeddings = []
         if self.small_emb_features:
@@ -178,6 +181,7 @@ class DLRMDCNV2(keras.Model):
             [dense_output, small_embeddings, *large_embeddings.values()],
             axis=-1,
         )
+        jax.debug.print("x {}", x.shape)
         x = self.dcn_block(x)
 
         # Predictions
