@@ -38,7 +38,7 @@ def _get_dummy_batch(batch_size, large_emb_features, small_emb_features):
     for small_emb_feature in small_emb_features:
         vocabulary_size = small_emb_feature["vocabulary_size"]
         multi_hot_size = small_emb_feature["multi_hot_size"]
-        idx = large_emb_feature["name"].split("-")[-1]
+        idx = small_emb_feature["name"].split("-")[-1]
 
         # TODO: We don't need this custom renaming. Remove later, when we
         # shift from dummy data to actual data.
