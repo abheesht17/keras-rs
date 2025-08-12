@@ -151,7 +151,9 @@ def main(
             for k, v in large_emb_inputs.items():
                 large_emb_inputs[k] = v.numpy()
 
-            print(features["small_emb_inputs"])
+            small_emb_inputs = features["small_emb_inputs"]
+            for k, v in small_emb_inputs.items():
+                small_emb_inputs[k] = v.numpy()
 
             x = make_global_view(
                 {
@@ -161,7 +163,7 @@ def main(
                             features["large_emb_inputs"], training=training
                         )
                     ),
-                    "small_emb_inputs": features["small_emb_inputs"].numpy(),
+                    "small_emb_inputs": features["small_emb_inputs"],
                 }
             )
             y = make_global_view(labels.numpy())
