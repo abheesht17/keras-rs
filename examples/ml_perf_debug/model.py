@@ -115,6 +115,7 @@ class DLRMDCNV2(keras.Model):
             keras.layers.Embedding(
                 input_dim=small_emb_feature["vocabulary_size"],
                 output_dim=embedding_dim,
+                embeddings_initializer="zeros",
                 name=f"small_embedding_layer_{i}",
             )
             for i, small_emb_feature in enumerate(small_emb_features)
