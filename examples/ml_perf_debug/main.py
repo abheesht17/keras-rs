@@ -157,7 +157,18 @@ def main(
                 small_emb_inputs[k] = v.numpy()
 
             features["dense_input"] = features["dense_input"].numpy()
-            x = make_global_view(features)
+
+            global_features = make_global_view(features)
+
+            preprocessed_large_embeddings = model.embedding_layer.preprocess(
+                global_features["large_emb_inputs"], training=training
+            )
+            x = {
+                "dense_input": global_features["dense_input"],
+                "large_emb_inputs": preprocessed_large_embeddings,
+                "small_emb_inputs": global_features["small_emb_inputs"],
+            }
+
             y = make_global_view(labels.numpy())
             yield (x, y)
 
