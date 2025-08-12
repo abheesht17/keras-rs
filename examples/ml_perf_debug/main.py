@@ -253,22 +253,22 @@ if __name__ == "__main__":
     print(f"{small_emb_features=}")
     print(f"{large_emb_features=}")
 
-    main(
-        file_pattern,
-        dense_features,
-        large_emb_features,
-        small_emb_features,
-        label,
-        embedding_dim,
-        allow_id_dropping,
-        max_ids_per_partition,
-        max_unique_ids_per_partition,
-        embedding_learning_rate,
-        bottom_mlp_dims,
-        top_mlp_dims,
-        num_dcn_layers,
-        dcn_projection_dim,
-        learning_rate,
-        global_batch_size,
-        num_epochs,
-    )
+    # main(
+    #     file_pattern,
+    #     dense_features,
+    #     large_emb_features,
+    #     small_emb_features,
+    #     label,
+    #     embedding_dim,
+    #     allow_id_dropping,
+    #     max_ids_per_partition,
+    #     max_unique_ids_per_partition,
+    #     embedding_learning_rate,
+    #     bottom_mlp_dims,
+    #     top_mlp_dims,
+    #     num_dcn_layers,
+    #     dcn_projection_dim,
+    #     learning_rate,
+    #     global_batch_size,
+    #     num_epochs,
+    # )
