@@ -7,6 +7,7 @@ import argparse
 import os
 
 import jax
+import jax.numpy as jnp
 import yaml
 from jax.sharding import PartitionSpec as P
 
