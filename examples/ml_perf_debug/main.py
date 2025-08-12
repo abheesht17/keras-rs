@@ -128,21 +128,21 @@ def main(
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
-    # # For the multi-host case, the dataset has to be distributed manually.
-    # # See note here:
-    # # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
-    # if jax.process_count() > 1:
-    #     train_ds = distribution.distribute_dataset(train_ds)
-    #     distribution.auto_shard_dataset = False
+    # For the multi-host case, the dataset has to be distributed manually.
+    # See note here:
+    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
+    if jax.process_count() > 1:
+        train_ds = distribution.distribute_dataset(train_ds)
+        distribution.auto_shard_dataset = False
 
-    # for ele in train_ds:
-    #     print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
-    #     break
+    for ele in train_ds:
+        print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
+        break
 
-    # make_global_view = lambda x: jax.tree.map(
-    #     lambda y: jax.make_array_from_process_local_data(global_sharding, y),
-    #     x,
-    # )
+    make_global_view = lambda x: jax.tree.map(
+        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+        x,
+    )
 
     # def generator(dataset, training=False):
     #     """Converts tf.data Dataset to a Python generator and preprocesses
