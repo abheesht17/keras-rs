@@ -174,7 +174,7 @@ def main(
 
     train_generator = generator(train_ds, training=True)
     for first_batch in train_generator:
-        print(first_batch["small_emb_inputs"])
+        print(first_batch[0]["small_emb_inputs"])
         break
     # print("DATASET LOADED")
     # for first_batch in train_generator:
