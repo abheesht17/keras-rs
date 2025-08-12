@@ -83,7 +83,7 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            placement="default_device",
+            placement="sparsecore",
             # TODO: These two args are not getting passed down to
             # `jax-tpu-embedding` properly, seems like.
             max_ids_per_partition=max_ids_per_partition,
@@ -94,8 +94,8 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(per_host_batch_size, multi_hot_size),
-            output_shape=(per_host_batch_size, embedding_dim),
+            input_shape=(global_batch_size, multi_hot_size),
+            output_shape=(global_batch_size, embedding_dim),
         )
 
     # === Instantiate model ===
