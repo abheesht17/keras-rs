@@ -144,38 +144,38 @@ def main(
         x,
     )
 
-    # def generator(dataset, training=False):
-    #     """Converts tf.data Dataset to a Python generator and preprocesses
-    #     sparse features.
-    #     """
-    #     for features, labels in dataset:
-    #         large_emb_inputs = features["large_emb_inputs"]
-    #         for k, v in large_emb_inputs.items():
-    #             large_emb_inputs[k] = v.numpy()
+    def generator(dataset, training=False):
+        """Converts tf.data Dataset to a Python generator and preprocesses
+        sparse features.
+        """
+        for features, labels in dataset:
+            large_emb_inputs = features["large_emb_inputs"]
+            for k, v in large_emb_inputs.items():
+                large_emb_inputs[k] = v.numpy()
 
-    #         small_emb_inputs = features["small_emb_inputs"]
-    #         for k, v in small_emb_inputs.items():
-    #             small_emb_inputs[k] = v.numpy()
+            small_emb_inputs = features["small_emb_inputs"]
+            for k, v in small_emb_inputs.items():
+                small_emb_inputs[k] = v.numpy()
 
-    #         features["dense_input"] = features["dense_input"].numpy()
+            features["dense_input"] = features["dense_input"].numpy()
 
-    #         preprocessed_large_embeddings = model.embedding_layer.preprocess(
-    #             features["large_emb_inputs"], training=training
-    #         )
-    #         x = {
-    #             "dense_input": features["dense_input"],
-    #             "large_emb_inputs": preprocessed_large_embeddings,
-    #             "small_emb_inputs": features["small_emb_inputs"],
-    #         }
+            preprocessed_large_embeddings = model.embedding_layer.preprocess(
+                features["large_emb_inputs"], training=training
+            )
+            x = {
+                "dense_input": features["dense_input"],
+                "large_emb_inputs": preprocessed_large_embeddings,
+                "small_emb_inputs": features["small_emb_inputs"],
+            }
 
-    #         x = make_global_view(x)
-    #         y = make_global_view(labels.numpy())
-    #         yield (x, y)
+            x = make_global_view(x)
+            y = make_global_view(labels.numpy())
+            yield (x, y)
 
-    # train_generator = generator(train_ds, training=True)
-    # # for first_batch in train_generator:
-    # #     print(first_batch)
-    # #     break
+    train_generator = generator(train_ds, training=True)
+    for first_batch in train_generator:
+        print(first_batch)
+        break
     # print("DATASET LOADED")
     # for first_batch in train_generator:
     #     print("BRUH")
