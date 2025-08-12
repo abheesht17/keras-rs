@@ -147,12 +147,16 @@ def main(
         sparse features.
         """
         for features, labels in dataset:
+            large_emb_inputs = features["large_emb_inputs"]
+            for k, v in large_emb_inputs.items():
+                large_emb_inputs[k] = v.numpy()
+
             x = make_global_view(
                 {
                     "dense_input": features["dense_input"].numpy(),
                     "large_emb_inputs": (
                         model.embedding_layer.preprocess(
-                            features["large_emb_inputs"].numpy(), training=training
+                            features["large_emb_inputs"], training=training
                         )
                     ),
                     "small_emb_inputs": features["small_emb_inputs"].numpy(),
