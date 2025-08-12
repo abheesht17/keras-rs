@@ -7,7 +7,6 @@ import argparse
 import os
 
 import jax
-import jax.numpy as jnp
 import yaml
 from jax.sharding import PartitionSpec as P
 
@@ -15,6 +14,7 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 
 import keras
+
 keras.config.disable_traceback_filtering()
 from dataloader import create_dummy_dataset
 from model import DLRMDCNV2
@@ -154,17 +154,10 @@ def main(
 
             small_emb_inputs = features["small_emb_inputs"]
             for k, v in small_emb_inputs.items():
-                small_emb_inputs[k] = v.numpy()  
+                small_emb_inputs[k] = v.numpy()
 
-            x = make_global_view({
-                    "dense_input": features["dense_input"].numpy(),
-                    "large_emb_inputs": (
-                        model.embedding_layer.preprocess(
-                            features["large_emb_inputs"], training=training
-                        )
-                    ),
-                    "small_emb_inputs": features["small_emb_inputs"],
-                })
+            features["dense_input"] = features["dense_input"].numpy()
+            x = make_global_view(features)
             y = make_global_view(labels.numpy())
             yield (x, y)
 
