@@ -7,6 +7,7 @@ import argparse
 import os
 
 import jax
+jax.config.update("jax_debug_nans", True)
 import jax.numpy as jnp
 import yaml
 from jax.sharding import PartitionSpec as P
@@ -126,7 +127,7 @@ def main(
     # === Load dataset ===
     print("===== Loading dataset =====")
     train_ds = create_dummy_dataset(
-        batch_size=global_batch_size,
+        batch_size=per_host_batch_size,
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
