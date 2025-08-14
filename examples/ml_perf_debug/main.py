@@ -55,6 +55,13 @@ def main(
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
 
+    # For the multi-host case, the dataset has to be distributed manually.
+    # See note here:
+    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
+    if jax.process_count() > 1:
+        # train_ds = distribution.distribute_dataset(train_ds)
+        distribution.auto_shard_dataset = False
+
     per_host_batch_size = global_batch_size // jax.process_count()
 
     # === Distributed embeddings' configs for sparse features ===
@@ -131,12 +138,6 @@ def main(
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
-    # For the multi-host case, the dataset has to be distributed manually.
-    # See note here:
-    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
-    if jax.process_count() > 1:
-        # train_ds = distribution.distribute_dataset(train_ds)
-        distribution.auto_shard_dataset = False
 
     # for ele in train_ds:
     #     print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
@@ -166,12 +167,11 @@ def main(
                 features["large_emb_inputs"], training=training
             )
             x = {
-                "dense_input": features["dense_input"],
-                "large_emb_inputs": preprocessed_large_embeddings,
-                "small_emb_inputs": features["small_emb_inputs"],
+                "dense_input": make_global_view(features["dense_input"]),
+                "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
+                "small_emb_inputs": make_global_view(features["small_emb_inputs"]),
             }
 
-            x = make_global_view(x)
             y = make_global_view(labels.numpy())
             yield (x, y)
 
