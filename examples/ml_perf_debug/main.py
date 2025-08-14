@@ -166,6 +166,7 @@ def main(
             preprocessed_large_embeddings = model.embedding_layer.preprocess(
                 features["large_emb_inputs"], training=training
             )
+            print("------>", preprocessed_large_embeddings)
             x = {
                 "dense_input": make_global_view(features["dense_input"]),
                 "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
