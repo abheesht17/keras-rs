@@ -166,7 +166,7 @@ def main(
             preprocessed_large_embeddings = model.embedding_layer.preprocess(
                 features["large_emb_inputs"], training=training
             )
-            print("------>", preprocessed_large_embeddings)
+            # print("------>", preprocessed_large_embeddings)
             x = {
                 "dense_input": make_global_view(features["dense_input"]),
                 "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
@@ -180,9 +180,9 @@ def main(
     # for first_batch in train_generator:
     #     print(first_batch[0]["small_emb_inputs"])
     #     break
-    print("DATASET LOADED")
+    # print("DATASET LOADED")
     for first_batch in train_generator:
-        print("BRUH")
+        # print("BRUH")
         print("--->", model(first_batch[0]))
         break
 
