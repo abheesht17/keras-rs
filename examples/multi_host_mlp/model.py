@@ -149,7 +149,7 @@ class DLRMDCNV2(keras.Model):
         """
         # Inputs
         dense_input = inputs["dense_input"]
-        large_emb_inputs = inputs["large_emb_inputs"]
+        # large_emb_inputs = inputs["large_emb_inputs"]
         # jax.debug.print("dense_input {}", dense_input.shape)
         # jax.debug.print("large_emb_inputs {}", [v.shape for v in large_emb_inputs.values()])
 
@@ -170,7 +170,7 @@ class DLRMDCNV2(keras.Model):
 
         # Interaction
         x = ops.concatenate(
-            [dense_output, small_embeddings, *large_embeddings.values()],
+            [dense_output, small_embeddings],
             axis=-1,
         )
 
