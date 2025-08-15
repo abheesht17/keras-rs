@@ -102,11 +102,12 @@ def main(
 
     train_generator = generator(train_ds, training=True)
     for first_batch in train_generator:
-        model(first_batch[0])
+        output_arr = model(first_batch[0])
+        print("--->", multihost_utils.process_allgather(output_arr))
         break
 
     # Train the model.
-    # model.fit(train_generator, epochs=1)
+    model.fit(train_generator, epochs=1)
 
 
 if __name__ == "__main__":
