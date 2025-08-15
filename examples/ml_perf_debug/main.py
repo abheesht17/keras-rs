@@ -7,7 +7,7 @@ import argparse
 import os
 
 import jax
-jax.config.update("jax_debug_nans", True)
+# jax.config.update("jax_debug_nans", True)
 import jax.numpy as jnp
 import yaml
 from jax.sharding import PartitionSpec as P
