@@ -183,7 +183,8 @@ def main(
     # print("DATASET LOADED")
     for first_batch in train_generator:
         # print("BRUH")
-        print("--->", model(first_batch[0]))
+        model(first_batch[0])
+        # print("--->", model(first_batch[0]))
         break
 
     # Train the model.
