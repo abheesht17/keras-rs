@@ -7,10 +7,9 @@ import argparse
 import os
 
 import jax
+
 # jax.config.update("jax_debug_nans", True)
-import jax.numpy as jnp
 import yaml
-from jax.sharding import PartitionSpec as P
 
 os.environ["KERAS_BACKEND"] = "jax"
 
@@ -46,21 +45,14 @@ def main(
     num_epochs,
 ):
     # This is to manually shard the dataset across TPUs.
-    pd = P("x")
-    global_devices = jax.devices()
-    mesh = jax.sharding.Mesh(global_devices, "x")
-    global_sharding = jax.sharding.NamedSharding(mesh, pd)
+    # pd = P("x")
+    # global_devices = jax.devices()
+    # mesh = jax.sharding.Mesh(global_devices, "x")
+    # global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
-
-    # For the multi-host case, the dataset has to be distributed manually.
-    # See note here:
-    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
-    if jax.process_count() > 1:
-        # train_ds = distribution.distribute_dataset(train_ds)
-        distribution.auto_shard_dataset = False
 
     per_host_batch_size = global_batch_size // jax.process_count()
 
@@ -138,42 +130,47 @@ def main(
         large_emb_features=large_emb_features,
         small_emb_features=small_emb_features,
     )
+    # For the multi-host case, the dataset has to be distributed manually.
+    # See note here:
+    # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
+    if jax.process_count() > 1:
+        train_ds = distribution.distribute_dataset(train_ds)
+        distribution.auto_shard_dataset = False
 
     # for ele in train_ds:
     #     print("--->", ele[0]["large_emb_inputs"]["cat_14_id"].shape)
     #     break
 
-    make_global_view = lambda x: jax.tree.map(
-        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
-        x,
-    )
+    # make_global_view = lambda x: jax.tree.map(
+    #     lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+    #     x,
+    # )
 
     def generator(dataset, training=False):
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
         for features, labels in dataset:
-            large_emb_inputs = features["large_emb_inputs"]
-            for k, v in large_emb_inputs.items():
-                large_emb_inputs[k] = v.numpy()
+            # large_emb_inputs = features["large_emb_inputs"]
+            # for k, v in large_emb_inputs.items():
+            #     large_emb_inputs[k] = v.numpy()
 
-            small_emb_inputs = features["small_emb_inputs"]
-            for k, v in small_emb_inputs.items():
-                small_emb_inputs[k] = v.numpy()
+            # small_emb_inputs = features["small_emb_inputs"]
+            # for k, v in small_emb_inputs.items():
+            #     small_emb_inputs[k] = v.numpy()
 
-            features["dense_input"] = features["dense_input"].numpy()
+            # features["dense_input"] = features["dense_input"].numpy()
 
             preprocessed_large_embeddings = model.embedding_layer.preprocess(
                 features["large_emb_inputs"], training=training
             )
-            # print("------>", preprocessed_large_embeddings)
-            x = {
-                "dense_input": make_global_view(features["dense_input"]),
-                "large_emb_inputs": make_global_view(preprocessed_large_embeddings),
-                "small_emb_inputs": make_global_view(features["small_emb_inputs"]),
-            }
 
-            y = make_global_view(labels.numpy())
+            x = {
+                "dense_input": features["dense_input"],
+                "large_emb_inputs": preprocessed_large_embeddings,
+                "small_emb_inputs": features["small_emb_inputs"],
+            }
+            y = labels
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
@@ -188,7 +185,7 @@ def main(
         break
 
     # Train the model.
-    model.fit(train_generator, epochs=1)
+    # model.fit(train_generator, epochs=1)
 
 
 if __name__ == "__main__":
