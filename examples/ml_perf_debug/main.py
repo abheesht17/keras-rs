@@ -175,9 +175,17 @@ def main(
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
-    for first_batch in train_generator:
-        model(first_batch[0])
-        break
+    steps_per_epoch = 512
+    for i, batch in enumerate(train_generator):
+        if i >= steps_per_epoch:
+            break
+        loss = model.train_on_batch(x=batch[0], y=batch[1])
+        if i % 50 == 0:
+            print(f"Step {i}, Loss: {loss}")
+
+    # for first_batch in train_generator:
+    #     model(first_batch[0])
+    #     break
 
     # Train the model.
     model.fit(train_generator, epochs=1)
