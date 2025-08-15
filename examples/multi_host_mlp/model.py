@@ -196,12 +196,12 @@ class DLRMDCNV2(keras.Model):
         Returns:
             A list of `keras.layers.Dense` layers.
         """
-        # initializer = keras.initializers.VarianceScaling(
-        #     scale=1.0,
-        #     mode="fan_in",
-        #     distribution="uniform",
-        #     seed=self.seed,
-        # )
+        initializer = keras.initializers.VarianceScaling(
+            scale=1.0,
+            mode="fan_in",
+            distribution="uniform",
+            seed=self.seed,
+        )
 
         layers = [
             keras.layers.Dense(
