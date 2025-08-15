@@ -45,10 +45,10 @@ def main(
     num_epochs,
 ):
     # This is to manually shard the dataset across TPUs.
-    # pd = P("x")
-    # global_devices = jax.devices()
-    # mesh = jax.sharding.Mesh(global_devices, "x")
-    # global_sharding = jax.sharding.NamedSharding(mesh, pd)
+    pd = P("x")
+    global_devices = jax.devices()
+    mesh = jax.sharding.Mesh(global_devices, "x")
+    global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
