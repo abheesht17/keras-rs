@@ -14,15 +14,15 @@ dataset:
     prefix: "int-feature-"
     count: 13
   sparse:
-    - {name: "categorical-feature-14", vocabulary_size: 40000000, multi_hot_size: 3}
+    - {name: "categorical-feature-14", vocabulary_size: 40000, multi_hot_size: 3}
     - {name: "categorical-feature-15", vocabulary_size: 39060,    multi_hot_size: 2}
-    - {name: "categorical-feature-16", vocabulary_size: 17295,    multi_hot_size: 1}
-    - {name: "categorical-feature-17", vocabulary_size: 7424,     multi_hot_size: 2}
-    - {name: "categorical-feature-18", vocabulary_size: 20265,    multi_hot_size: 6}
-    - {name: "categorical-feature-19", vocabulary_size: 3,        multi_hot_size: 1}
-    - {name: "categorical-feature-20", vocabulary_size: 7122,     multi_hot_size: 1}
-    - {name: "categorical-feature-21", vocabulary_size: 1543,     multi_hot_size: 1}
-    - {name: "categorical-feature-22", vocabulary_size: 63,       multi_hot_size: 1}
+    # - {name: "categorical-feature-16", vocabulary_size: 17295,    multi_hot_size: 1}
+    # - {name: "categorical-feature-17", vocabulary_size: 7424,     multi_hot_size: 2}
+    # - {name: "categorical-feature-18", vocabulary_size: 20265,    multi_hot_size: 6}
+    # - {name: "categorical-feature-19", vocabulary_size: 3,        multi_hot_size: 1}
+    # - {name: "categorical-feature-20", vocabulary_size: 7122,     multi_hot_size: 1}
+    # - {name: "categorical-feature-21", vocabulary_size: 1543,     multi_hot_size: 1}
+    # - {name: "categorical-feature-22", vocabulary_size: 63,       multi_hot_size: 1}
     # - {name: "categorical-feature-23", vocabulary_size: 40000000, multi_hot_size: 7}
     # - {name: "categorical-feature-24", vocabulary_size: 3067956,  multi_hot_size: 3}
     # - {name: "categorical-feature-25", vocabulary_size: 405282,   multi_hot_size: 8}
