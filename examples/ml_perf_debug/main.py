@@ -97,8 +97,8 @@ def main(
             table=table_config,
             # TODO: Verify whether it should be `(bsz, 1)` or
             # `(bsz, multi_hot_size)`.
-            input_shape=(global_batch_size, multi_hot_size),
-            output_shape=(global_batch_size, embedding_dim),
+            input_shape=(per_host_batch_size, multi_hot_size),
+            output_shape=(per_host_batch_size, embedding_dim),
         )
 
     # === Instantiate model ===
