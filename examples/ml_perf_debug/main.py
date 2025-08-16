@@ -52,7 +52,8 @@ def main(
     # global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     # Set DDP as Keras distribution strategy
-    distribution = keras.distribution.DataParallel()
+    print("-------->", jax.device("tpu"))
+    distribution = keras.distribution.DataParallel(devices=jax.device("tpu"))
     keras.distribution.set_distribution(distribution)
 
     per_host_batch_size = global_batch_size // jax.process_count()
