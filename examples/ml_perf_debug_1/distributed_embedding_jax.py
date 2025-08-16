@@ -264,7 +264,11 @@ We can use the standard Keras `model.fit()` to train the model. Keras will
 automatically use the `TPUStrategy` to distribute the model and the data.
 """
 
-model.fit(train_dataset_generator(), epochs=5)
+for gg in train_dataset_generator():
+    print("forward pass")
+    model(gg[0])
+
+# model.fit(train_dataset_generator(), epochs=5)
 
 # """Same for `model.evaluate()`."""
 
