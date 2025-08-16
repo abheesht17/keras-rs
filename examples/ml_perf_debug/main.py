@@ -171,6 +171,8 @@ def main(
                 "large_emb_inputs": preprocessed_large_embeddings,
                 "small_emb_inputs": features["small_emb_inputs"],
             }
+            print("---> dense input sharding")
+            jax.debug.visualize_array_sharding(features["dense_input"])
             y = labels.numpy()
             yield (x, y)
 
