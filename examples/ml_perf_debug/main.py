@@ -53,7 +53,7 @@ def main(
 
     # Set DDP as Keras distribution strategy
     print("-------->", jax.device("tpu"))
-    distribution = keras.distribution.DataParallel(devices=jax.device("tpu"))
+    distribution = keras.distribution.DataParallel(devices=jax.devices("tpu"))
     keras.distribution.set_distribution(distribution)
 
     per_host_batch_size = global_batch_size // jax.process_count()
