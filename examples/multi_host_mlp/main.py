@@ -7,6 +7,7 @@ import argparse
 import os
 
 import jax
+from jax.sharding import PartitionSpec as P
 from jax.experimental import multihost_utils
 
 # jax.config.update("jax_debug_nans", True)
