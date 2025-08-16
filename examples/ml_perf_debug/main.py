@@ -52,7 +52,7 @@ def main(
     # global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     # Set DDP as Keras distribution strategy
-    print("-------->", jax.device("tpu"))
+    print("-------->", jax.devices("tpu"))
     distribution = keras.distribution.DataParallel(devices=jax.devices("tpu"))
     keras.distribution.set_distribution(distribution)
 
