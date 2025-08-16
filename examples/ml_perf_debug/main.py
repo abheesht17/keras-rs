@@ -86,7 +86,7 @@ def main(
                 learning_rate=embedding_learning_rate
             ),
             combiner="sum",
-            placement="sparsecore",
+            placement="default_device",
             # TODO: These two args are not getting passed down to
             # `jax-tpu-embedding` properly, seems like.
             max_ids_per_partition=max_ids_per_partition,
