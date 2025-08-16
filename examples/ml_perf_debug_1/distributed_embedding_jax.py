@@ -27,6 +27,8 @@ v6e.
 Let's begin by choosing JAX as the backend and importing all the necessary
 libraries.
 """
+import sys
+sys.path.append("/home/abheesht_google_com/keras-rs")
 
 import os
 
