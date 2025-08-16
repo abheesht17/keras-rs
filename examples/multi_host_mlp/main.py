@@ -45,6 +45,12 @@ def main(
     global_batch_size,
     num_epochs,
 ):
+    # This is to manually shard the dataset across TPUs.
+    pd = P("x")
+    global_devices = jax.devices()
+    mesh = jax.sharding.Mesh(global_devices, "x")
+    global_sharding = jax.sharding.NamedSharding(mesh, pd)
+
     # Set DDP as Keras distribution strategy
     distribution = keras.distribution.DataParallel()
     keras.distribution.set_distribution(distribution)
@@ -85,20 +91,29 @@ def main(
     # See note here:
     # https://github.com/keras-team/keras-rs/blob/main/keras_rs/src/layers/embedding/base_distributed_embedding.py#L352-L363.
     if jax.process_count() > 1:
-        train_ds = distribution.distribute_dataset(train_ds)
+        # train_ds = distribution.distribute_dataset(train_ds)
         distribution.auto_shard_dataset = False
 
+    make_global_view = lambda x: jax.tree.map(
+        lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+        x,
+    )
 
     def generator(dataset, training=False):
         """Converts tf.data Dataset to a Python generator and preprocesses
         sparse features.
         """
         for features, labels in dataset:
+            small_emb_inputs = features["small_emb_inputs"]
+            for k, v in small_emb_inputs.items():
+                small_emb_inputs[k] = v.numpy()
+            features["dense_input"] = features["dense_input"].numpy()
+
             x = {
-                "dense_input": features["dense_input"],
-                "small_emb_inputs": features["small_emb_inputs"],
+                "dense_input": make_global_view(features["dense_input"]),
+                "small_emb_inputs": make_global_view(features["small_emb_inputs"]),
             }
-            y = labels
+            y = make_global_view(labels.numpy())
             yield (x, y)
 
     train_generator = generator(train_ds, training=True)
