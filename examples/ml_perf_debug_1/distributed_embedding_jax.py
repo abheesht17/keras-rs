@@ -103,12 +103,17 @@ shuffled_ratings = ratings.map(preprocess_rating).shuffle(
 train_ratings = (
     shuffled_ratings.take(80_000).batch(BATCH_SIZE, drop_remainder=True).cache()
 )
-test_ratings = (
-    shuffled_ratings.skip(80_000)
-    .take(20_000)
-    .batch(BATCH_SIZE, drop_remainder=True)
-    .cache()
-)
+# test_ratings = (
+#     shuffled_ratings.skip(80_000)
+#     .take(20_000)
+#     .batch(BATCH_SIZE, drop_remainder=True)
+#     .cache()
+# )
+
+if jax.process_count() > 1:
+    train_ratings = distribution.distribute_dataset(train_ratings)
+    # test_ratings = distribution.distribute_dataset(test_ratings)
+    distribution.auto_shard_dataset = False
 
 """## Configuring DistributedEmbedding
 
@@ -259,12 +264,12 @@ automatically use the `TPUStrategy` to distribute the model and the data.
 
 model.fit(train_dataset_generator(), epochs=5)
 
-"""Same for `model.evaluate()`."""
+# """Same for `model.evaluate()`."""
 
-model.evaluate(test_dataset_generator(), return_dict=True)
+# model.evaluate(test_dataset_generator(), return_dict=True)
 
-"""That's it.
+# """That's it.
 
-This example shows that after configuring the `DistributedEmbedding` and setting
-up the required preprocessing, you can use the standard Keras workflows.
-"""
+# This example shows that after configuring the `DistributedEmbedding` and setting
+# up the required preprocessing, you can use the standard Keras workflows.
+# """
