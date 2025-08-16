@@ -14,10 +14,10 @@ dataset:
     prefix: "int-feature-"
     count: 13
   sparse:
-    - {name: "categorical-feature-14", vocabulary_size: 4000000, multi_hot_size: 3}
+    - {name: "categorical-feature-14", vocabulary_size: 40000, multi_hot_size: 3}
     - {name: "categorical-feature-15", vocabulary_size: 39060,    multi_hot_size: 2}
-    # - {name: "categorical-feature-16", vocabulary_size: 17295,    multi_hot_size: 1}
-    # - {name: "categorical-feature-17", vocabulary_size: 7424,     multi_hot_size: 2}
+    - {name: "categorical-feature-16", vocabulary_size: 17295,    multi_hot_size: 1}
+    - {name: "categorical-feature-17", vocabulary_size: 7424,     multi_hot_size: 2}
     # - {name: "categorical-feature-18", vocabulary_size: 20265,    multi_hot_size: 6}
     # - {name: "categorical-feature-19", vocabulary_size: 3,        multi_hot_size: 1}
     # - {name: "categorical-feature-20", vocabulary_size: 7122,     multi_hot_size: 1}
