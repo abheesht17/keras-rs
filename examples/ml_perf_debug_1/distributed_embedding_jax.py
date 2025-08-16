@@ -103,7 +103,7 @@ shuffled_ratings = ratings.map(preprocess_rating).shuffle(
     100_000, seed=42, reshuffle_each_iteration=False
 )
 train_ratings = (
-    shuffled_ratings.take(80_000).batch(BATCH_SIZE, drop_remainder=True).cache()
+    shuffled_ratings.take(80_000).batch(BATCH_SIZE, drop_remainder=True)
 )
 # test_ratings = (
 #     shuffled_ratings.skip(80_000)
