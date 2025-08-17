@@ -263,9 +263,12 @@ make_global_view = lambda x: jax.tree.map(
 def train_dataset_generator():
     for inputs, labels in iter(train_ratings):
         for k, v in inputs.items():
-            inputs[k] = make_global_view(v.numpy())
+            inputs[k] = v.numpy()
+        x = model.embedding_layer.preprocess(inputs, training=True)
+
+        x = make_global_view(x)
         labels = make_global_view(labels.numpy())
-        yield model.embedding_layer.preprocess(inputs, training=True), labels
+        yield x, labels
 
 
 def test_dataset_generator():
