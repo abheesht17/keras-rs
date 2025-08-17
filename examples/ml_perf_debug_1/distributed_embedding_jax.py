@@ -35,6 +35,7 @@ import os
 os.environ["KERAS_BACKEND"] = "jax"
 
 import jax
+from jax.sharding import PartitionSpec as P
 import keras
 import keras_rs
 import tensorflow as tf  # Needed for the dataset
@@ -58,6 +59,11 @@ keras.distribution.set_distribution(distribution)
 We're going to use the same Movielens data. The ratings are the objectives we
 are trying to predict.
 """
+
+pd = P("x")
+global_devices = jax.devices()
+mesh = jax.sharding.Mesh(global_devices, "x")
+global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
 # Ratings data.
 ratings = tfds.load("movielens/100k-ratings", split="train")
@@ -113,7 +119,7 @@ train_ratings = (
 # )
 
 if jax.process_count() > 1:
-    train_ratings = distribution.distribute_dataset(train_ratings)
+    # train_ratings = distribution.distribute_dataset(train_ratings)
     # test_ratings = distribution.distribute_dataset(test_ratings)
     distribution.auto_shard_dataset = False
 
@@ -249,8 +255,16 @@ hardware-dependent format required for use with SparseCores. We'll do this by
 wrapping the datasets into generator functions.
 """
 
+make_global_view = lambda x: jax.tree.map(
+    lambda y: jax.make_array_from_process_local_data(global_sharding, y),
+    x,
+)
+
 def train_dataset_generator():
     for inputs, labels in iter(train_ratings):
+        for k, v in large_emb_inputs.items():
+            inputs[k] = make_global_view(v.numpy())
+        labels = make_global_view(labels.numpy())
         yield model.embedding_layer.preprocess(inputs, training=True), labels
 
 
