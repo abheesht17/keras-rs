@@ -8,7 +8,6 @@ from typing import Any, Mapping, NamedTuple, Sequence, TypeAlias, TypeVar
 import jax
 import numpy as np
 from jax_tpu_embedding.sparsecore.lib.nn import embedding
-from jax_tpu_embedding.sparsecore.lib.nn import table_stacking
 from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import FeatureSpec
 from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import StackedTableSpec
 from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import TableSpec
@@ -20,6 +19,10 @@ T = TypeVar("T")
 # Any to support tf.Ragged without needing an explicit TF dependency.
 ArrayLike: TypeAlias = jax.Array | np.ndarray | Any  # type: ignore
 Shape: TypeAlias = tuple[int, ...]
+
+
+def _round_up_to_multiple(value: int, multiple: int) -> int:
+    return ((value + multiple - 1) // multiple) * multiple
 
 
 class FeatureSamples(NamedTuple):
