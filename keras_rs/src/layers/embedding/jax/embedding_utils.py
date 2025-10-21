@@ -189,7 +189,7 @@ def stack_and_shard_samples(
     global_device_count: int,
     num_sc_per_device: int,
     static_buffer_size: int | Mapping[str, int] | None = None,
-) -> tuple[dict[str, ShardedCooMatrix], embedding.SparseDenseMatmulInputStats]:
+) -> tuple[dict[str, ShardedCooMatrix], dict[str, InputStatsPerTable]]:
     """Prepares input samples for use in embedding lookups.
 
     Args:
@@ -234,14 +234,12 @@ def stack_and_shard_samples(
     )
 
     out: dict[str, ShardedCooMatrix] = {}
+    out_stats: dict[str, InputStatsPerTable] = {}
     tables_names = preprocessed_inputs.lhs_row_pointers.keys()
     for table_name in tables_names:
         shard_ends = preprocessed_inputs.lhs_row_pointers[table_name]
         shard_starts = np.concatenate(
-            [
-                np.asarray([0]),
-                table_stacking._next_largest_multiple(shard_ends[:-1], 8),
-            ]
+            [np.asarray([0]), _round_up_to_multiple(shard_ends[:-1], 8)]
         )
         out[table_name] = ShardedCooMatrix(
             shard_starts=shard_starts,
@@ -250,8 +248,20 @@ def stack_and_shard_samples(
             row_ids=preprocessed_inputs.lhs_sample_ids[table_name],
             values=preprocessed_inputs.lhs_gains[table_name],
         )
+        out_stats[table_name] = InputStatsPerTable(
+            max_ids_per_partition=np.max(
+                stats.max_ids_per_partition[table_name]
+            ),
+            max_unique_ids_per_partition=np.max(
+                stats.max_unique_ids_per_partition[table_name]
+            ),
+            required_buffer_size_per_device=np.max(
+                stats.required_buffer_size_per_sc[table_name]
+            )
+            * num_sc_per_device,
+        )
 
-    return out, stats
+    return out, out_stats
 
 
 def get_stacked_table_stats(
