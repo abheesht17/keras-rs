@@ -120,11 +120,11 @@ gcloud alpha compute tpus tpu-vm ssh ${TPU_NAME} \
       echo '>>> Cloning keras-rs repository...'
       git clone https://github.com/abheesht17/keras-rs.git
       cd keras-rs
-      git checkout ml-perf
+      git checkout ml-perf-antonio
     else
       echo '>>> keras-rs repository exists. Pulling latest changes...'
       cd keras-rs
-      git checkout ml-perf # Ensure we are on the correct branch
+      git checkout ml-perf-antonio # Ensure we are on the correct branch
       git pull
     fi
 
