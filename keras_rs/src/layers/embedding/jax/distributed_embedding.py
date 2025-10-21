@@ -605,55 +605,40 @@ class DistributedEmbedding(base_distributed_embedding.DistributedEmbedding):
         if training:
             # Synchronize input statistics across all devices and update the
             # underlying stacked tables specs in the feature specs.
-
-            # Aggregate stats across all processes/devices via pmax.
-            num_local_cpu_devices = jax.local_device_count("cpu")
-            print(f"-->{num_local_cpu_devices=}")
-
-            def pmax_aggregate(x: Any) -> Any:
-                if not hasattr(x, "ndim"):
-                    x = np.array(x)
-                jax.debug.print("--> x.shape={}", x.shape)
-                tiled_x = np.tile(x, (num_local_cpu_devices, *([1] * x.ndim)))
-                jax.debug.print("--> tiled_x.shape={}", tiled_x.shape)
-                return jax.pmap(
-                    lambda y: jax.lax.pmax(y, "all_cpus"),  # type: ignore[no-untyped-call]
-                    axis_name="all_cpus",
-                    backend="cpu",
-                )(tiled_x)[0]
-
-            full_stats = jax.tree.map(pmax_aggregate, stats)
-
-            # Check if stats changed enough to warrant action.
-            stacked_table_specs = embedding.get_stacked_table_specs(
+            prev_stats = embedding_utils.get_stacked_table_stats(
                 self._config.feature_specs
             )
-            changed = any(
-                np.max(full_stats.max_ids_per_partition[stack_name])
-                > spec.max_ids_per_partition
-                or np.max(full_stats.max_unique_ids_per_partition[stack_name])
-                > spec.max_unique_ids_per_partition
-                or (
-                    np.max(full_stats.required_buffer_size_per_sc[stack_name])
-                    * num_sc_per_device
-                )
-                > (spec.suggested_coo_buffer_size_per_device or 0)
-                for stack_name, spec in stacked_table_specs.items()
+
+            # Take the maximum with existing stats.
+            stats = keras.tree.map_structure(max, prev_stats, stats)
+
+            # Flatten the stats so we can more efficiently transfer them
+            # between hosts.  We use jax.tree because we will later need to
+            # unflatten.
+            flat_stats, stats_treedef = jax.tree.flatten(stats)
+
+            # In the case of multiple local CPU devices per host, we need to
+            # replicate the stats to placate JAX collectives.
+            num_local_cpu_devices = jax.local_device_count("cpu")
+            tiled_stats = np.tile(
+                np.array(flat_stats, dtype=np.int32), (num_local_cpu_devices, 1)
             )
 
-            # Update configuration and repeat preprocessing if stats changed.
-            if changed:
-                embedding.update_preprocessing_parameters(
-                    self._config.feature_specs, full_stats, num_sc_per_device
-                )
+            # Aggregate variables across all processes/devices.
+            max_across_cpus = jax.pmap(
+                lambda x: jax.lax.pmax(  # type: ignore[no-untyped-call]
+                    x, "all_cpus"
+                ),
+                axis_name="all_cpus",
+                backend="cpu",
+            )
+            flat_stats = max_across_cpus(tiled_stats)[0].tolist()
+            stats = jax.tree.unflatten(stats_treedef, flat_stats)
 
-                # Re-execute preprocessing with consistent input statistics.
-                preprocessed, _ = embedding_utils.stack_and_shard_samples(
-                    self._config.feature_specs,
-                    samples,
-                    local_device_count,
-                    global_device_count,
-                    num_sc_per_device,
+            # Update configuration and repeat preprocessing if stats changed.
+            if stats != prev_stats:
+                embedding_utils.update_stacked_table_stats(
+                    self._config.feature_specs, stats
                 )
 
         return {"inputs": preprocessed}

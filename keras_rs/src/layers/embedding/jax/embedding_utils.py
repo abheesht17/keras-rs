@@ -1,6 +1,8 @@
 """Utility functions for manipulating JAX embedding tables and inputs."""
 
 import collections
+import dataclasses
+import typing
 from typing import Any, Mapping, NamedTuple, Sequence, TypeAlias, TypeVar
 
 import jax
@@ -8,6 +10,8 @@ import numpy as np
 from jax_tpu_embedding.sparsecore.lib.nn import embedding
 from jax_tpu_embedding.sparsecore.lib.nn import table_stacking
 from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import FeatureSpec
+from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import StackedTableSpec
+from jax_tpu_embedding.sparsecore.lib.nn.embedding_spec import TableSpec
 
 from keras_rs.src.types import Nested
 
@@ -29,6 +33,12 @@ class ShardedCooMatrix(NamedTuple):
     col_ids: ArrayLike
     row_ids: ArrayLike
     values: ArrayLike
+
+
+class InputStatsPerTable(NamedTuple):
+    max_ids_per_partition: int
+    max_unique_ids_per_partition: int
+    required_buffer_size_per_device: int
 
 
 def convert_to_numpy(
@@ -242,3 +252,81 @@ def stack_and_shard_samples(
         )
 
     return out, stats
+
+
+def get_stacked_table_stats(
+    feature_specs: Nested[FeatureSpec],
+) -> dict[str, InputStatsPerTable]:
+    """Extracts the stacked-table input statistics from the feature specs.
+
+    Args:
+        feature_specs: Feature specs from which to extracts the statistics.
+
+    Returns:
+        A mapping of stacked table names to input statistics per table.
+    """
+    stacked_table_specs: dict[str, StackedTableSpec] = {}
+    for feature_spec in jax.tree.flatten(feature_specs)[0]:
+        feature_spec = typing.cast(FeatureSpec, feature_spec)
+        stacked_table_spec = typing.cast(
+            StackedTableSpec, feature_spec.table_spec.stacked_table_spec
+        )
+        stacked_table_specs[stacked_table_spec.stack_name] = stacked_table_spec
+
+    stats: dict[str, InputStatsPerTable] = {}
+    for stacked_table_spec in stacked_table_specs.values():
+        buffer_size = stacked_table_spec.suggested_coo_buffer_size_per_device
+        buffer_size = buffer_size or 0
+        stats[stacked_table_spec.stack_name] = InputStatsPerTable(
+            max_ids_per_partition=stacked_table_spec.max_ids_per_partition,
+            max_unique_ids_per_partition=stacked_table_spec.max_unique_ids_per_partition,
+            required_buffer_size_per_device=buffer_size,
+        )
+
+    return stats
+
+
+def update_stacked_table_stats(
+    feature_specs: Nested[FeatureSpec],
+    stats: Mapping[str, InputStatsPerTable],
+) -> None:
+    """Updates stacked-table input properties in the supplied feature specs.
+
+    Args:
+        feature_specs: Feature specs to update in-place.
+        stats: Per-stacked-table input statistics.
+    """
+    # Collect table specs and stacked table specs.
+    table_specs: dict[str, TableSpec] = {}
+    for feature_spec in jax.tree.flatten(feature_specs)[0]:
+        feature_spec = typing.cast(FeatureSpec, feature_spec)
+        table_specs[feature_spec.table_spec.name] = feature_spec.table_spec
+
+    stacked_table_specs: dict[str, StackedTableSpec] = {}
+    for table_spec in table_specs.values():
+        stacked_table_spec = typing.cast(
+            StackedTableSpec, table_spec.stacked_table_spec
+        )
+        stacked_table_specs[stacked_table_spec.stack_name] = stacked_table_spec
+
+    # Replace fields in the stacked_table_specs.
+    stack_names = stacked_table_specs.keys()
+    for stack_name in stack_names:
+        stack_stats = stats[stack_name]
+        stacked_table_spec = stacked_table_specs[stack_name]
+        buffer_size = stack_stats.required_buffer_size_per_device or None
+        stacked_table_specs[stack_name] = dataclasses.replace(
+            stacked_table_spec,
+            max_ids_per_partition=stack_stats.max_ids_per_partition,
+            max_unique_ids_per_partition=stack_stats.max_unique_ids_per_partition,
+            suggested_coo_buffer_size_per_device=buffer_size,
+        )
+
+    # Insert new stacked tables into tables.
+    for table_spec in table_specs.values():
+        stacked_table_spec = typing.cast(
+            StackedTableSpec, table_spec.stacked_table_spec
+        )
+        table_spec.stacked_table_spec = stacked_table_specs[
+            stacked_table_spec.stack_name
+        ]
