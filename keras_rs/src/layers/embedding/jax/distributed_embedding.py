@@ -603,6 +603,7 @@ class DistributedEmbedding(base_distributed_embedding.DistributedEmbedding):
             # Aggregate stats across all processes/devices via pmax.
             all_stats = multihost_utils.process_allgather(stats)
             print("### all_stats", all_stats)
+            aggregated_stats = all_stats
             # aggregated_stats = jax.tree.map(
             #     lambda x: jnp.max(x, axis=0), all_stats
             # )
