@@ -602,9 +602,10 @@ class DistributedEmbedding(base_distributed_embedding.DistributedEmbedding):
 
             # Aggregate stats across all processes/devices via pmax.
             all_stats = multihost_utils.process_allgather(stats)
-            aggregated_stats = jax.tree.map(
-                lambda x: jnp.max(x, axis=0), all_stats
-            )
+            print("### all_stats", all_stats)
+            # aggregated_stats = jax.tree.map(
+            #     lambda x: jnp.max(x, axis=0), all_stats
+            # )
 
             # Check if stats changed enough to warrant action.
             stacked_table_specs = embedding.get_stacked_table_specs(
