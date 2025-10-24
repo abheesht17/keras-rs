@@ -143,7 +143,7 @@ def main(
     #     do_eval = False
 
     steps_per_epoch = training_cfg.num_steps
-    epochs = 1
+    epochs = 2
     do_eval = False
 
     train_ds = DataLoader(
