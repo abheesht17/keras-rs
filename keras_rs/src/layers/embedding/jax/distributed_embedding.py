@@ -602,11 +602,11 @@ class DistributedEmbedding(base_distributed_embedding.DistributedEmbedding):
 
             # Aggregate stats across all processes/devices via pmax.
             all_stats = multihost_utils.process_allgather(stats)
-            print("### all_stats", all_stats)
-            aggregated_stats = all_stats
-            # aggregated_stats = jax.tree.map(
-            #     lambda x: jnp.max(x, axis=0), all_stats
-            # )
+            # print("### all_stats", all_stats)
+            # aggregated_stats = all_stats
+            aggregated_stats = jax.tree.map(
+                lambda x: jnp.max(x, axis=0), all_stats
+            )
 
             # Check if stats changed enough to warrant action.
             stacked_table_specs = embedding.get_stacked_table_specs(
@@ -637,14 +637,14 @@ class DistributedEmbedding(base_distributed_embedding.DistributedEmbedding):
                     num_sc_per_device,
                 )
 
-            # # Re-execute preprocessing with consistent input statistics.
-            # preprocessed, _ = embedding_utils.stack_and_shard_samples(
-            #     self._config.feature_specs,
-            #     samples,
-            #     local_device_count,
-            #     global_device_count,
-            #     num_sc_per_device,
-            # )
+                # Re-execute preprocessing with consistent input statistics.
+                preprocessed, _ = embedding_utils.stack_and_shard_samples(
+                    self._config.feature_specs,
+                    samples,
+                    local_device_count,
+                    global_device_count,
+                    num_sc_per_device,
+                )
 
         return {"inputs": preprocessed}
 
