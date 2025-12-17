@@ -9,6 +9,8 @@ import time
 os.environ["KERAS_BACKEND"] = "jax"
 
 import jax
+from jax.sharding import NamedSharding
+from jax.sharding import PartitionSpec as P
 import keras
 
 import keras_rs
@@ -39,6 +41,7 @@ class ThreadedDataLoader:
         dataset,
         distribution,
         num_workers=1,
+        global_sharding=None,
         training=False,
     ):
         # Attributes.
@@ -46,7 +49,15 @@ class ThreadedDataLoader:
         self.dataset = get_iterator(dataset)
         self.distribution = distribution
         self.num_workers = num_workers
+        self.global_sharding = global_sharding
         self.training = training
+
+        self._make_global_view = lambda x: jax.tree.map(
+            lambda y: jax.make_array_from_process_local_data(
+                self.global_sharding, y
+            ),
+            x,
+        )
 
         # Queue for pushing samples.
         self._buffer = collections.deque(maxlen=12)
@@ -65,11 +76,15 @@ class ThreadedDataLoader:
         )
 
         x = {
-            "dense_input": features["dense_input"],
-            "large_emb_inputs": preprocessed_large_embeddings,
-            "small_emb_inputs": features["small_emb_inputs"],
+            "dense_input": self._make_global_view(features["dense_input"]),
+            "large_emb_inputs": self._make_global_view(
+                preprocessed_large_embeddings
+            ),
+            "small_emb_inputs": self._make_global_view(
+                features["small_emb_inputs"],
+            )
         }
-        y = labels
+        y = self._make_global_view(labels)
         return (x, y)
 
     def _worker_loop(self):
@@ -123,6 +138,11 @@ def main(
     logger.info("Running with %d processes.", num_processes)
     if distribution._process_id is not None:
         logger.info("Current Process ID: %d", distribution._process_id)
+
+    pd = P("x")
+    global_devices = jax.devices()
+    mesh = jax.sharding.Mesh(global_devices, "x")
+    global_sharding = jax.sharding.NamedSharding(mesh, pd)
 
     # === Distributed embeddings' configs for lookup features ===
 
@@ -310,6 +330,7 @@ def main(
         train_ds,
         distribution,
         num_workers=4,
+        global_sharding=global_sharding,
         training=True,
     )
     train_gen = (batch for batch in train_ds)
@@ -320,6 +341,7 @@ def main(
             eval_ds,
             distribution,
             num_workers=1,
+            global_sharding=global_sharding,
             training=False,
         )
         eval_gen = (batch for batch in eval_ds)
