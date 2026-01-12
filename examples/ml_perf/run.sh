@@ -117,6 +117,7 @@ gcloud alpha compute tpus tpu-vm ssh ${TPU_NAME} \
     source .keras-env/bin/activate
 
     rm -rf keras-rs
+    rm -rf keras
 
     if [ ! -d 'keras-rs' ]; then
       echo '>>> Cloning keras-rs repository...'
@@ -133,7 +134,23 @@ gcloud alpha compute tpus tpu-vm ssh ${TPU_NAME} \
 
     echo '>>> Installing/updating dependencies...'
     pip install -e .
-    pip install -U jax-tpu-embedding tensorflow-cpu keras
+
+    cd ..
+    if [ ! -d 'keras' ]; then
+      echo '>>> Cloning keras repository...'
+      git clone https://github.com/abheesht17/keras.git
+      cd keras
+      git checkout ml-perf-fixes
+    else
+      echo '>>> keras repository exists. Pulling latest changes...'
+      cd keras
+      git pull
+      git checkout ml-perf-fixes
+      git pull
+    fi
+
+    pip install -e .
+    pip install -U jax-tpu-embedding tensorflow-cpu
   "
 
 

@@ -27,6 +27,19 @@ keras.utils.set_random_seed(SEED)
 keras.config.disable_traceback_filtering()
 
 
+def _distribute_data(data, layouts=None):
+    distribution = distribution_lib.distribution()
+
+    if distribution is not None:
+        jax_dist_data_input = partial(
+            jax_distribution_lib.distribute_data_input,
+            batch_dim_name=distribution.batch_dim_name,
+        )
+        return tree.map_structure(jax_dist_data_input, data, layouts)
+
+    return tree.map_structure(jax.device_put, data)
+
+
 class MetricLogger(keras.callbacks.Callback):
     def on_train_batch_end(self, batch, logs=None):
         print("--->", logs["loss"])
@@ -65,11 +78,11 @@ class ThreadedDataLoader:
         )
 
         x = {
-            "dense_input": features["dense_input"],
-            "large_emb_inputs": preprocessed_large_embeddings,
-            "small_emb_inputs": features["small_emb_inputs"],
+            "dense_input": _distribute_data(features["dense_input"])),
+            "large_emb_inputs": _distribute_data(reprocessed_large_embeddings),
+            "small_emb_inputs": _distribute_data(features["small_emb_inputs"]),
         }
-        y = labels
+        y = _distribute_data(labels)
         return (x, y)
 
     def _worker_loop(self):
