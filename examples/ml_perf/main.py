@@ -10,6 +10,7 @@ from functools import partial
 
 os.environ["KERAS_BACKEND"] = "jax"
 
+import numpy as np
 import jax
 import keras
 
@@ -34,7 +35,6 @@ keras.config.disable_traceback_filtering()
 
 
 def convert_to_jax_compatible(x):
-    import numpy as np
     import jax.experimental.sparse as jax_sparse
 
     if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
