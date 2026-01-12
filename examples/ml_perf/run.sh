@@ -116,6 +116,8 @@ gcloud alpha compute tpus tpu-vm ssh ${TPU_NAME} \
     set -e # Ensure script exits on error
     source .keras-env/bin/activate
 
+    rm -rf keras-rs
+
     if [ ! -d 'keras-rs' ]; then
       echo '>>> Cloning keras-rs repository...'
       git clone https://github.com/abheesht17/keras-rs.git
