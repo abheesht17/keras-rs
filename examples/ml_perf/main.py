@@ -361,7 +361,7 @@ def main(
         model.embedding_layer.preprocess,
         train_ds,
         distribution,
-        num_workers=2,
+        num_workers=4,
         training=True,
     )
     train_gen = (batch for batch in train_ds)
