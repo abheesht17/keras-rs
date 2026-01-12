@@ -33,14 +33,16 @@ logger = logging.getLogger(__name__)
 keras.utils.set_random_seed(SEED)
 keras.config.disable_traceback_filtering()
 
-
 def convert_to_jax_compatible(x):
-    import jax.experimental.sparse as jax_sparse
+    def _convert(x):
+        import jax.experimental.sparse as jax_sparse
 
-    if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
-        return x
-    else:
-        return np.asarray(x)
+        if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
+            return x
+        else:
+            return np.asarray(x)
+
+    return tree.map_structure(_convert, x, none_is_leaf=False)
 
 def _distribute_data(data, layouts=None):
     # distribution = distribution_lib.distribution()
