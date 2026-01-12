@@ -6,6 +6,8 @@ import os
 import threading
 import time
 
+from functools import partial
+
 os.environ["KERAS_BACKEND"] = "jax"
 
 import jax
