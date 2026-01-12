@@ -52,7 +52,7 @@ def _distribute_data(data, layouts=None):
     #     return tree.map_structure(jax_dist_data_input, data, layouts)
 
     # return tree.map_structure(jax.device_put, data)
-    yield data
+    return data
 
 
 class MetricLogger(keras.callbacks.Callback):
