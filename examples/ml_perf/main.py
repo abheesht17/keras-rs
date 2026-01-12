@@ -98,9 +98,10 @@ class ThreadedDataLoader:
 
     def _preprocess(self, features, labels):
         """Preprocesses large embedding features."""
-        preprocessed_large_embeddings = self.process_fn(
-            features["large_emb_inputs"], training=self.training
-        )
+        with tracking.no_automatic_dependency_tracking()
+            preprocessed_large_embeddings = self.process_fn(
+                features["large_emb_inputs"], training=self.training
+            )
 
         preprocessed_large_embeddings = convert_to_jax_compatible(
             preprocessed_large_embeddings
