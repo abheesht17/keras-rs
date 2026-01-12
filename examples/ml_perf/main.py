@@ -88,7 +88,7 @@ class ThreadedDataLoader:
         self.training = training
 
         # Queue for pushing samples.
-        self._buffer = collections.deque(maxlen=4)
+        self._buffer = collections.deque(maxlen=2)
         self._sync = threading.Condition()
         self._workers = []
 
@@ -99,10 +99,9 @@ class ThreadedDataLoader:
 
     def _preprocess(self, features, labels):
         """Preprocesses large embedding features."""
-        with tracking.no_automatic_dependency_tracking():
-            preprocessed_large_embeddings = self.process_fn(
-                features["large_emb_inputs"], training=self.training
-            )
+        preprocessed_large_embeddings = self.process_fn(
+            features["large_emb_inputs"], training=self.training
+        )
 
         preprocessed_large_embeddings = convert_to_jax_compatible(
             preprocessed_large_embeddings
@@ -363,7 +362,7 @@ def main(
         model.embedding_layer.preprocess,
         train_ds,
         distribution,
-        num_workers=4,
+        num_workers=2,
         training=True,
     )
     train_gen = (batch for batch in train_ds)
