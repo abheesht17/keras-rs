@@ -10,6 +10,7 @@ from functools import partial
 
 os.environ["KERAS_BACKEND"] = "jax"
 
+import numpy as np
 import jax
 import keras
 
@@ -37,12 +38,6 @@ def convert_to_jax_compatible(x):
     if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
         print("---> jax.Array, JAXSparse, np.ndarray")
         return x
-    elif is_scipy_sparse(x):
-        print("---> SciPy Sparse")
-        return scipy_sparse_to_jax_sparse(x)
-    elif is_tensorflow_sparse(x):
-        print("---> TF Sparse")
-        return tf_sparse_to_jax_sparse(x)
     else:
         print("---> ELSE")
         return np.asarray(x)
