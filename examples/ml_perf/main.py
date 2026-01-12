@@ -46,7 +46,7 @@ def convert_to_jax_compatible(x):
 
 def _distribute_data(data, layouts=None):
     distribution = distribution_lib.distribution()
-    print(f"--->{distribution=}")
+    # print(f"--->{distribution=}")
 
     if distribution is not None:
         if layouts is None:
@@ -54,7 +54,7 @@ def _distribute_data(data, layouts=None):
                 lambda d: distribution.get_data_layout(d.shape),
                 data,
             )
-        print(f"--->{layouts=}")
+        # print(f"--->{layouts=}")
 
         jax_dist_data_input = partial(
             jax_distribution_lib.distribute_data_input,
