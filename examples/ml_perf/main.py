@@ -33,6 +33,20 @@ keras.utils.set_random_seed(SEED)
 keras.config.disable_traceback_filtering()
 
 
+def convert_to_jax_compatible(x):
+    if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
+        print("---> jax.Array, JAXSparse, np.ndarray")
+        return x
+    elif is_scipy_sparse(x):
+        print("---> SciPy Sparse")
+        return scipy_sparse_to_jax_sparse(x)
+    elif is_tensorflow_sparse(x):
+        print("---> TF Sparse")
+        return tf_sparse_to_jax_sparse(x)
+    else:
+        print("---> ELSE")
+        return np.asarray(x)
+
 def _distribute_data(data, layouts=None):
     # distribution = distribution_lib.distribution()
     # print(distribution)
@@ -91,15 +105,21 @@ class ThreadedDataLoader:
         preprocessed_large_embeddings = self.process_fn(
             features["large_emb_inputs"], training=self.training
         )
+        preprocessed_large_embeddings = convert_to_jax_compatible(
+            preprocessed_large_embeddings
+        )
 
-        print("---->", features["dense_input"])
+        dense_input = convert_to_jax_compatible(features["dense_input"])
+        small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
+
+        print("---->", dense_input)
         print("---->", preprocessed_large_embeddings)
-        print("---->", features["small_emb_inputs"])
+        print("---->", small_emb_inputs)
 
         x = {
-            "dense_input": _distribute_data(features["dense_input"]),
+            "dense_input": _distribute_data(dense_input),
             "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
-            "small_emb_inputs": _distribute_data(features["small_emb_inputs"]),
+            "small_emb_inputs": _distribute_data(small_emb_inputs),
         }
         y = _distribute_data(labels)
         return (x, y)
@@ -321,14 +341,21 @@ def main(
                 features["large_emb_inputs"], training=training
             )
 
-            print("---->", features["dense_input"])
+            preprocessed_large_embeddings = convert_to_jax_compatible(
+                preprocessed_large_embeddings
+            )
+
+            dense_input = convert_to_jax_compatible(features["dense_input"])
+            small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
+
+            print("---->", dense_input)
             print("---->", preprocessed_large_embeddings)
-            print("---->", features["small_emb_inputs"])
+            print("---->", small_emb_inputs)
 
             x = {
-                "dense_input": _distribute_data(features["dense_input"]),
+                "dense_input": _distribute_data(dense_input),
                 "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
-                "small_emb_inputs": _distribute_data(features["small_emb_inputs"]),
+                "small_emb_inputs": _distribute_data(small_emb_inputs),
             }
             y = _distribute_data(labels)
             yield (x, y)
