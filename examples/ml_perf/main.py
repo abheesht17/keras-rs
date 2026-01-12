@@ -38,10 +38,8 @@ def convert_to_jax_compatible(x):
     import jax.experimental.sparse as jax_sparse
 
     if isinstance(x, (jax.Array, jax_sparse.JAXSparse, np.ndarray)):
-        print("---> jax.Array, JAXSparse, np.ndarray")
         return x
     else:
-        print("---> ELSE")
         return np.asarray(x)
 
 def _distribute_data(data, layouts=None):
