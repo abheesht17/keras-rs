@@ -43,6 +43,7 @@ def _distribute_data(data, layouts=None):
                 lambda d: distribution.get_data_layout(d.shape),
                 data,
             )
+        print(f"--->{layouts=}")
 
         jax_dist_data_input = partial(
             jax_distribution_lib.distribute_data_input,
