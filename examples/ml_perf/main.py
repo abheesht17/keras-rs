@@ -11,6 +11,9 @@ os.environ["KERAS_BACKEND"] = "jax"
 import jax
 import keras
 
+from keras.src.backend import distribution_lib as jax_distribution_lib
+from keras.src.distribution import distribution_lib
+
 import keras_rs
 
 # jax.config.update("jax_debug_nans", True)
