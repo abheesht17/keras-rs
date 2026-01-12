@@ -98,7 +98,7 @@ class ThreadedDataLoader:
 
     def _preprocess(self, features, labels):
         """Preprocesses large embedding features."""
-        with tracking.no_automatic_dependency_tracking()
+        with tracking.no_automatic_dependency_tracking():
             preprocessed_large_embeddings = self.process_fn(
                 features["large_emb_inputs"], training=self.training
             )
