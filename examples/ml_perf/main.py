@@ -109,10 +109,6 @@ class ThreadedDataLoader:
         dense_input = convert_to_jax_compatible(features["dense_input"])
         small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
 
-        print("---->", dense_input)
-        print("---->", preprocessed_large_embeddings)
-        print("---->", small_emb_inputs)
-
         x = {
             "dense_input": _distribute_data(dense_input),
             "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
@@ -344,10 +340,6 @@ def main(
 
             dense_input = convert_to_jax_compatible(features["dense_input"])
             small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
-
-            print("---->", dense_input)
-            print("---->", preprocessed_large_embeddings)
-            print("---->", small_emb_inputs)
 
             x = {
                 "dense_input": _distribute_data(dense_input),
