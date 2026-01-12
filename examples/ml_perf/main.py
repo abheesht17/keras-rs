@@ -100,12 +100,13 @@ class ThreadedDataLoader:
         preprocessed_large_embeddings = self.process_fn(
             features["large_emb_inputs"], training=self.training
         )
+
         preprocessed_large_embeddings = convert_to_jax_compatible(
             preprocessed_large_embeddings
         )
-
         dense_input = convert_to_jax_compatible(features["dense_input"])
         small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
+        labels = np.array(labels)
 
         x = {
             "dense_input": _distribute_data(dense_input),
@@ -335,9 +336,9 @@ def main(
             preprocessed_large_embeddings = convert_to_jax_compatible(
                 preprocessed_large_embeddings
             )
-
             dense_input = convert_to_jax_compatible(features["dense_input"])
             small_emb_inputs = convert_to_jax_compatible(features["small_emb_inputs"])
+            labels = np.array(labels)
 
             x = {
                 "dense_input": _distribute_data(dense_input),
