@@ -91,6 +91,10 @@ class ThreadedDataLoader:
             features["large_emb_inputs"], training=self.training
         )
 
+        print(features["dense_input"])
+        print(preprocessed_large_embeddings)
+        print(features["small_emb_inputs"])
+
         x = {
             "dense_input": _distribute_data(features["dense_input"]),
             "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
