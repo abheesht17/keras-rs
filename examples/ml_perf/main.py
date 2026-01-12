@@ -87,7 +87,7 @@ class ThreadedDataLoader:
         self.training = training
 
         # Queue for pushing samples.
-        self._buffer = collections.deque(maxlen=12)
+        self._buffer = collections.deque(maxlen=4)
         self._sync = threading.Condition()
         self._workers = []
 
@@ -361,7 +361,7 @@ def main(
         model.embedding_layer.preprocess,
         train_ds,
         distribution,
-        num_workers=4,
+        num_workers=2,
         training=True,
     )
     train_gen = (batch for batch in train_ds)
