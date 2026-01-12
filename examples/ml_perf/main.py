@@ -29,6 +29,7 @@ keras.config.disable_traceback_filtering()
 
 def _distribute_data(data, layouts=None):
     distribution = distribution_lib.distribution()
+    print(distribution)
 
     if distribution is not None:
         jax_dist_data_input = partial(
@@ -303,11 +304,11 @@ def main(
             )
 
             x = {
-                "dense_input": features["dense_input"],
-                "large_emb_inputs": preprocessed_large_embeddings,
-                "small_emb_inputs": features["small_emb_inputs"],
+                "dense_input": _distribute_data(features["dense_input"]),
+                "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
+                "small_emb_inputs": _distribute_data(features["small_emb_inputs"]),
             }
-            y = labels
+            y = _distribute_data(labels)
             yield (x, y)
 
     model.fit(
