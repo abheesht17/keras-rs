@@ -16,6 +16,7 @@ import keras
 
 from keras.src.backend import distribution_lib as jax_distribution_lib
 from keras.src.distribution import distribution_lib
+from keras.src.utils import tracking
 from keras.src import tree
 
 import keras_rs
