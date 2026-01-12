@@ -45,25 +45,24 @@ def convert_to_jax_compatible(x):
     return tree.map_structure(_convert, x, none_is_leaf=False)
 
 def _distribute_data(data, layouts=None):
-    # distribution = distribution_lib.distribution()
-    # print(distribution)
+    distribution = distribution_lib.distribution()
+    print(f"--->{distribution=}")
 
-    # if distribution is not None:
-    #     if layouts is None:
-    #         layouts = tree.map_structure(
-    #             lambda d: distribution.get_data_layout(d.shape),
-    #             data,
-    #         )
-    #     print(f"--->{layouts=}")
+    if distribution is not None:
+        if layouts is None:
+            layouts = tree.map_structure(
+                lambda d: distribution.get_data_layout(d.shape),
+                data,
+            )
+        print(f"--->{layouts=}")
 
-    #     jax_dist_data_input = partial(
-    #         jax_distribution_lib.distribute_data_input,
-    #         batch_dim_name=distribution.batch_dim_name,
-    #     )
-    #     return tree.map_structure(jax_dist_data_input, data, layouts)
+        jax_dist_data_input = partial(
+            jax_distribution_lib.distribute_data_input,
+            batch_dim_name=distribution.batch_dim_name,
+        )
+        return tree.map_structure(jax_dist_data_input, data, layouts)
 
-    # return tree.map_structure(jax.device_put, data)
-    return data
+    return tree.map_structure(jax.device_put, data)
 
 
 class MetricLogger(keras.callbacks.Callback):
