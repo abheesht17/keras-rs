@@ -86,7 +86,7 @@ class ThreadedDataLoader:
 
         x = {
             "dense_input": _distribute_data(features["dense_input"]),
-            "large_emb_inputs": _distribute_data(reprocessed_large_embeddings),
+            "large_emb_inputs": _distribute_data(preprocessed_large_embeddings),
             "small_emb_inputs": _distribute_data(features["small_emb_inputs"]),
         }
         y = _distribute_data(labels)
