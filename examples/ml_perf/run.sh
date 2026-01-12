@@ -124,6 +124,7 @@ gcloud alpha compute tpus tpu-vm ssh ${TPU_NAME} \
     else
       echo '>>> keras-rs repository exists. Pulling latest changes...'
       cd keras-rs
+      git pull
       git checkout ml-perf-fixes
       git pull
     fi
